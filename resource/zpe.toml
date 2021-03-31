@@ -1,0 +1,18 @@
+"policy_files_dir" = "var/policy"
+"cleanup_token_interval" = 600
+"athenz_config_dir" = "config"
+"athenz_token_no_expiry" = false
+"athenz_token_max_expiry" = 30
+"allowed_offset" = 300
+"grpc_server_port" = "8080"
+"cert_file_path" = ""
+"key_file_path" = ""
+"domain_name" = ""
+"service_name" = ""
+"role_name" = ""
+"token_expiration_min" = 0
+"token_expiration_min" = 0
+"key_version" = ""
+"n_token_expiration" = 0
+"zpu_download_interval" = 600
+
