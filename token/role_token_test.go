@@ -16,7 +16,9 @@ package token
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
+	"gitlab.com/trialblaze/athenz-agent/config"
 	"io/ioutil"
 	"strconv"
 	"strings"
@@ -34,15 +36,26 @@ const (
 	role5           = "fantasy.tenant.sports.scanner"
 	host            = "somehost.somecompany.com"
 	salt            = "saltstring"
-	testPrivateKey0 = "../resource/test_data/private_key0.key"
-	testPublicKey0  = "../resource/test_data/public_key0.key"
+	testPrivateKey0 = "testdata/private_key0.key"
+	testPublicKey0  = "testdata/public_key0.key"
+	configPath      = "testdata/zpe.toml"
 )
 
+func setup() {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+
+	if err := config.LoadGlobalZpeConfig(configPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
+}
+
 func TestNewRoleToken(t *testing.T) {
+	setup()
+
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1;d=trialblaze;r=role1,role2;s=signature")
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 	a.Equal(roleToken.Version, "S1")
 	a.Equal(roleToken.Domain, "trialblaze")
@@ -53,188 +66,199 @@ func TestNewRoleToken(t *testing.T) {
 }
 
 func TestNewRoleTokenEmpty(t *testing.T) {
+	setup()
+
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: input String signedToken must not be empty")
+	a.Equal("token.NewRoleToken-> input String signedToken must not be empty", err.Error())
 }
 
 func TestNewRoleTokenWithoutDomain(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1;r=role1,role2;s=signature")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: signedToken does not contain required domain component")
+	a.Equal("token.NewRoleToken-> signedToken does not contain required domain component", err.Error())
 }
 
 func TestNewRoleTokenEmptyDomain(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1;d=;r=role1,role2;s=signature")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: signedToken does not contain required domain component")
+	a.Equal("token.NewRoleToken-> signedToken does not contain required domain component", err.Error())
 }
 
 func TestNewRoleTokenWithoutRole(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1;d=trialblaze;s=signature")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: signedToken does not contain required roles component")
+	a.Equal("token.NewRoleToken-> signedToken does not contain required roles component", err.Error())
 }
 
 func TestNewRoleTokenEmptyRole(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1;d=trialblaze;r=;s=signature")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: signedToken does not contain required roles component")
+	a.Equal("token.NewRoleToken-> signedToken does not contain required roles component", err.Error())
 }
 
 func TestNewRoleTokenInvalidVersion(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	roleToken, err := NewRoleToken("v=S1=S2;d=trialblaze;r=role1,role2;s=signature")
 	a.NotNil(err)
 	a.Nil(roleToken)
-	a.Equal(err.Error(), "NewRoleToken: malformed token field v=S1=S2")
+	a.Equal("token.NewRoleToken-> malformed token field v=S1=S2", err.Error())
 }
 
 func TestTimeConversion(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	unix := "1549981415"
 	wrongValue := "j2je2k3e23"
 	_, err := asTime(unix, tagGenerationTime)
-	a.Nil(err)
+	a.NoError(err)
 
 	_, err = asTime(wrongValue, tagGenerationTime)
 	a.NotNil(err)
 }
 
 func TestValidateNilSignature(t *testing.T) {
-
+	setup()
 	a := assert.New(t)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt + ";h=" + host + ";r=" + role1
 	var pubKey string
 
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 
 	isValid, err := roleToken.Validate(pubKey, 3600, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.Equal(err.Error(), "RoleToken:Validate: missing data/signature component, data: , signature: ")
+	a.Equal(err.Error(), "token.(*RoleToken).Validate-> missing data/signature component, data: , signature: ")
 }
 
 func TestValidateNilPublicKey(t *testing.T) {
+	setup()
 	a := assert.New(t)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt + ";h=" + host + ";r=" + role1 + ";s=somesignature"
 	var pubKey string
 
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 
 	isValid, err := roleToken.Validate(pubKey, 3600, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.True(strings.HasPrefix(err.Error(), "RoleToken:Validate: no public key provided"))
+	a.True(strings.HasPrefix(err.Error(), "token.(*RoleToken).Validate-> no public key provided"))
 }
 
 func TestValidateFutureTimeStamp(t *testing.T) {
-
+	setup()
 	a := assert.New(t)
-	generatedToken := strconv.FormatInt((util.CurrentTimeMillis()/1000+4600)*int64(time.Second), 10)
+	generatedToken := strconv.FormatInt((common.CurrentTimeMillis()/1000+4600)*int64(time.Second), 10)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt +
 		";h=" + host + ";r=" + role1 + ";t=" + generatedToken + ";s=" + "somesignature"
 
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 
 	isValid, err := roleToken.Validate("someInvalidPubKey", 3600, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.True(strings.HasPrefix(err.Error(), "RoleToken:Validate: token has future generatedTime, generated time:"))
+	a.True(strings.HasPrefix(err.Error(), "token.(*RoleToken).Validate-> token has future generatedTime, generated time:"))
 
 }
 
 func TestValidateNoExpiry(t *testing.T) {
-
+	setup()
 	a := assert.New(t)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt +
 		";h=" + host + ";r=" + role1 + ";s=" + "somesignature"
 
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 	roleToken.AthenzTokenNoExpiry = false
 
 	isValid, err := roleToken.Validate("someInvalidPubKey", 3600, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.True(strings.HasPrefix(err.Error(), "RoleToken:Validate: token has expired"))
+	a.True(strings.HasPrefix(err.Error(), "token.(*RoleToken).Validate-> token has expired"))
 }
 
 func TestValidateTooFarExpiryTimestamp(t *testing.T) {
+	setup()
+
 	a := assert.New(t)
-	expiration := strconv.FormatInt((util.CurrentTimeMillis()/1000+(30*24*60*60)+10)*int64(time.Second), 10)
+	expiration := strconv.FormatInt((common.CurrentTimeMillis()/1000+(30*24*60*60)+10)*int64(time.Second), 10)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt +
 		";h=" + host + ";r=" + role1 + ";e=" + expiration + ";s=" + "somesignature"
 
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 
 	roleToken.AthenzTokenMaxExpiry = 30
 	isValid, err := roleToken.Validate("someInvalidPubKey", 5, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.True(strings.HasPrefix(err.Error(), "RoleToken:Validate: token expires too far int the future"))
+	a.True(strings.HasPrefix(err.Error(), "token.Validate> token expires too far in the future"))
 
 	isValid, err = roleToken.Validate("someInvalidPubKey", 20, false)
-	a.Nil(err)
+	a.NoError(err)
 	a.False(isValid)
 }
 
 func TestValidate(t *testing.T) {
-
+	setup()
 	a := assert.New(t)
-	generatedToken := strconv.FormatInt((util.CurrentTimeMillis()/1000-30)*int64(time.Second), 10)
-	expiration := strconv.FormatInt((util.CurrentTimeMillis()/1000+30)*int64(time.Second), 10)
+	generatedToken := strconv.FormatInt((common.CurrentTimeMillis()/1000-30)*int64(time.Second), 10)
+	expiration := strconv.FormatInt((common.CurrentTimeMillis()/1000+30)*int64(time.Second), 10)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt +
 		";h=" + host + ";r=" + role1 + ";t=" + generatedToken + ";e=" + expiration
 
 	data, err := ioutil.ReadFile(testPrivateKey0)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(data)
 
 	signer, err := zmssvctoken.NewSigner(data)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(signer)
 
 	signature, err := signer.Sign(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(signature)
 
 	signedToken = signedToken + ";s=" + signature
 	roleToken, err := NewRoleToken(signedToken)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(roleToken)
 
 	pubKey, err := ioutil.ReadFile(testPublicKey0)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(pubKey)
 
 	isValid, err := roleToken.Validate(string(pubKey), 3600, false)
-	a.Nil(err)
+	a.NoError(err)
 	a.True(isValid)
 }

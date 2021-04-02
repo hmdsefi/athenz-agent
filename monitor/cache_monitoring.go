@@ -21,15 +21,15 @@ package monitor
 import (
 	"fmt"
 	"gitlab.com/trialblaze/athenz-agent/cache"
+	"gitlab.com/trialblaze/athenz-agent/common"
 	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
 	"time"
 )
 
 func StartCache(cacheChan chan<- string) {
 	for {
 		cache.CleanupRoleTokenCache()
-		files, err := util.LoadFileStatus(config.ZpeConfig.Properties.PolicyFilesDir)
+		files, err := common.LoadFileStatus(config.ZpeConfig.Properties.PolicyFilesDir)
 		if err != nil {
 			cacheChan <- fmt.Sprintf("unable to read policy directory, error: %s", err.Error())
 		}

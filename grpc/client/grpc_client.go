@@ -21,20 +21,26 @@ package client
 import (
 	"errors"
 	"fmt"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"log"
 
 	ac "gitlab.com/trialblaze/grpc-go/pkg/api/common/command/v1"
 	msg "gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
 )
 
+var (
+	logger = log.GetLogger(common.GolangFileName())
+)
+
 func CheckAccessWithClient(token, access, resource, host, serverPort string) (int32, error) {
+
 	var conn *grpc.ClientConn
 
 	conn, err := grpc.Dial(host+serverPort, grpc.WithInsecure())
 	if err != nil {
-		log.Fatalf("CheckAccessWithClient: unable to connect, error: %s", err.Error())
+		logger.Fatalf("CheckAccessWithClient: unable to connect, error: %s", err.Error())
 	}
 	defer func() {
 		_ = conn.Close()
@@ -45,7 +51,8 @@ func CheckAccessWithClient(token, access, resource, host, serverPort string) (in
 	response, err := c.CheckAccessWithToken(context.Background(),
 		&msg.AccessCheckRequest{Token: token, Access: access, Resource: resource})
 	if err != nil {
-		return -1, errors.New(fmt.Sprintf("CheckAccessWithClient: error when calling `CheckAccessWithToken`, error: %s", err.Error()))
+		return -1, errors.New(fmt.Sprintf("%s> error when calling `CheckAccessWithToken`, error: %s",
+			common.FuncName(), err.Error()))
 	}
 
 	return response.AccessCheckStatus, err

@@ -37,20 +37,19 @@ type (
 	}
 )
 
-func LoadZpuConfig(zpuConfig *ZpuConfiguration, athenzConf, zpuConf string) error {
+// LoadGlobalZpuConfig loads config file from input path into the global
+// variable ZpuConfig.
+func LoadGlobalZpuConfig(athenzConfPath, zpuConfPath string) error {
+	return LoadZpuConfig(ZpuConfig, athenzConfPath, zpuConfPath)
+}
 
-	//if _, err := os.Stat(LogDir); os.IsNotExist(err) {
-	//	err := os.Mkdir(LogDir, 0755)
-	//	if err != nil {
-	//		fmt.Println("Main:createNecessaryFileFolder: cannot create logs directory")
-	//		os.Exit(1)
-	//	}
-	//}
-
+// LoadZpuConfig reads config file from a specific address and  loads it into
+// a ZpuConfiguration object.
+func LoadZpuConfig(zpuConfig *ZpuConfiguration, athenzConfPath, zpuConfPath string) error {
 
 	var err error
 	// load ZPU configuration using Yahoo zpe-updater
-	zpuConfig.Properties, err = zpu.NewZpuConfiguration(".", athenzConf, zpuConf)
+	zpuConfig.Properties, err = zpu.NewZpuConfiguration(".", athenzConfPath, zpuConfPath)
 	if err != nil {
 		return fmt.Errorf("LoadZpuConfig: unable to get zpu configuration, Error: %v", err)
 	}

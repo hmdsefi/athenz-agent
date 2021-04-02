@@ -18,7 +18,7 @@ package config
 
 import (
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
+	"gitlab.com/trialblaze/athenz-agent/common"
 	"io/ioutil"
 	"log"
 	"os"
@@ -34,7 +34,7 @@ const (
 )
 
 func CreateFile(fileName, content string) error {
-	if util.Exists(fileName) {
+	if common.Exists(fileName) {
 		err := os.Remove(fileName)
 		if err != nil {
 			return fmt.Errorf("unable to remove file: %v, Error: %v", fileName, err)
@@ -62,16 +62,16 @@ func TestReadAthenzConfig(t *testing.T) {
 	athenzConfig := new(AthenzConfiguration)
 
 	dir, err := ioutil.TempDir("./", testConfigDirPrefix)
-	a.Nil(err)
+	a.NoError(err)
 	defer RemoveAll(dir)
 
 	configPath := dir + "/" + testAthenzConfigFile
 
 	// check config file with missing keys
 	err = CreateFile(configPath, `{"zmsUrl":"zms_url","zmsPublicKeys":[{"id":"0","key":"zmsKey"}]}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadAthenzConfig(athenzConfig, configPath)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal("zms_url", athenzConfig.Properties.ZmsUrl)
 	a.Empty(athenzConfig.Properties.ZtsUrl)
 	a.Equal(1, len(athenzConfig.Properties.ZmsPublicKeys))
@@ -83,17 +83,16 @@ func TestReadAthenzConfig(t *testing.T) {
 	//check if file content is incorrect
 	athenzConfig = new(AthenzConfiguration)
 	err = CreateFile(configPath, `"zmsUrl":"zms_url","zmsPublicKeys":[{"id":"0","key":"zmsKey"}]}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadAthenzConfig(athenzConfig, configPath)
 	a.NotNil(err)
-	a.Empty(athenzConfig)
 
 	//check if file content is correct
 	athenzConfig = new(AthenzConfiguration)
 	err = CreateFile(configPath, `{"zmsUrl":"zms_url","ztsUrl":"zts_url","ztsPublicKeys":[{"id":"0","key":"key0"}],"zmsPublicKeys":[{"id":"1","key":"key1"}]}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadAthenzConfig(athenzConfig, configPath)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(athenzConfig.Properties.ZmsUrl, "zms_url")
 	a.Equal(athenzConfig.Properties.ZtsUrl, "zts_url")
 	a.Equal(1, len(athenzConfig.Properties.ZmsPublicKeys))
@@ -110,16 +109,16 @@ func TestReadZpeConfig(t *testing.T) {
 	zpeConfig := new(ZpeConfiguration)
 
 	dir, err := ioutil.TempDir("./", testConfigDirPrefix)
-	a.Nil(err)
+	a.NoError(err)
 	defer RemoveAll(dir)
 
 	configPath := dir + "/" + testZpeConfigFile
 
 	// check if file missing some key values
 	err = CreateFile(configPath, `{"policy_files_dir": "./resource/policy","athenz_config_dir":""}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadZpeConfig(zpeConfig, configPath)
-	a.Nil(err)
+	a.NoError(err)
 	a.Empty(zpeConfig.Properties.CleanupTokenInterval)
 	a.Empty(zpeConfig.Properties.AthenzConfigDir)
 	a.Equal(zpeConfig.Properties.PolicyFilesDir, "./resource/policy")
@@ -127,17 +126,16 @@ func TestReadZpeConfig(t *testing.T) {
 	// check if file content is incorrect
 	zpeConfig = new(ZpeConfiguration)
 	err = CreateFile(configPath, `"policy_files_dir": "./resource/policy","cleanup_token_interval":600,"athenz_config_dir":"./resource"}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadZpeConfig(zpeConfig, configPath)
-	a.NotNil(err)
-	a.Empty(zpeConfig)
+	a.Error(err)
 
 	// check if file content is correct
 	zpeConfig = new(ZpeConfiguration)
 	err = CreateFile(configPath, `{"policy_files_dir": "./resource/policy","cleanup_token_interval":600,"athenz_config_dir":"./resource","athenz_token_no_expiry":true,"athenz_token_max_expiry":30,"allowed_offset":300}`)
-	a.Nil(err)
+	a.NoError(err)
 	err = LoadZpeConfig(zpeConfig, configPath)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(zpeConfig.Properties.CleanupTokenInterval, int64(600))
 	a.Equal(zpeConfig.Properties.PolicyFilesDir, "./resource/policy")
 	a.Equal(zpeConfig.Properties.AthenzConfigDir, "./resource")

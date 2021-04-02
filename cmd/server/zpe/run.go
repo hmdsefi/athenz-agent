@@ -19,11 +19,11 @@ import (
 	"context"
 	"fmt"
 	"gitlab.com/trialblaze/athenz-agent/auth"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/config"
 	"gitlab.com/trialblaze/athenz-agent/grpc/server"
 	"gitlab.com/trialblaze/athenz-agent/monitor"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
-	"log"
 	"sync"
 )
 
@@ -33,15 +33,20 @@ func Run() {
 	var waitGrp sync.WaitGroup
 
 	loadConfigs()
+	logInit := log.NewLogrusInitializer()
+	logInit.InitialLog(log.GetLevel(config.AgentConfig.Properties.Log.GetLevel())).
+		SetupRotation(config.AgentConfig.Properties.Log)
+
+	logger := log.GetLogger(common.GolangFileName())
 
 	// make new directory for metric file, if it doesn't exist
-	if err := util.CreateAllDirectories(config.ZpuConfig.Properties.MetricsDir); err != nil {
-		log.Fatal("Main> cannot create metrics directory, error: ", err.Error())
+	if err := common.CreateAllDirectories(config.ZpuConfig.Properties.MetricsDir); err != nil {
+		logger.Fatalf("cannot create metrics directory, error: %s", err.Error())
 	}
 
 	// make new directory for policy files, if it doesn't exist
-	if err := util.CreateAllDirectories(config.ZpuConfig.Properties.PolicyFileDir); err != nil {
-		log.Fatal("Main> cannot create policy directory, error: ", err.Error())
+	if err := common.CreateAllDirectories(config.ZpuConfig.Properties.PolicyFileDir); err != nil {
+		logger.Fatalf("cannot create policy directory, error: %s"+err.Error())
 	}
 
 	// ZPU channel, it's pipeline for sending error
@@ -69,7 +74,8 @@ func Run() {
 	// start gRPC server in a goroutine
 	waitGrp.Add(1)
 	go func() {
-		if err := server.RunServer(ctx, permissionService, config.ZpeConfig.Properties.GRPCServerPort, &waitGrp); err != nil {
+		if err := server.RunServer(ctx, permissionService, config.AgentConfig.Properties.Server.Port, &waitGrp);
+		err != nil {
 			serverStatusChan <- fmt.Sprintf("Main>startGRPCServer: gRPC server failed to start, error: %s", err.Error())
 		}
 	}()
@@ -105,30 +111,33 @@ func Run() {
 		waitGrp.Wait()
 	// wait for shutting down server by OS signals
 	case cacheError = <-serverIsShutdown:
-		// do nothing
+		// cancel the server context to prevent context leak
+		cancel()
 	}
 
 	// print error reason and exit with code 1
-	log.Fatal(cacheError)
+	logger.Fatal(cacheError)
 
 }
 
 // loadConfigs loads all configurations
 func loadConfigs() {
-	if err := config.LoadAgentConfig(config.AgentConfig, agentConfPath); err != nil {
-		log.Fatal("Main> unable to read agent config file, error: ", err.Error())
+	// use function name in logs and errors
+	funcName := common.FuncName()
+
+	if err := config.LoadGlobalAgentConfig(agentConfPath); err != nil {
+		common.Fatalf("%s> unable to read agent config file, error: %s", funcName, err.Error())
 	}
 
-	if err := config.LoadZpeConfig(config.ZpeConfig, zpeConfigPath); err != nil {
-		log.Fatal("Main.loadConfigs> unable to open zpe config file, error: ", err.Error())
+	if err := config.LoadGlobalZpeConfig(zpeConfigPath); err != nil {
+		common.Fatalf("%s> unable to open zpe config file, error: %s", funcName, err.Error())
 	}
 
-	if err := config.LoadAthenzConfig(config.KeyStore, athenzConfigPath); err != nil {
-		log.Fatal("Main.loadConfigs> unable to open athenz config file, error: ", err.Error())
+	if err := config.LoadGlobalAthenzConfig(athenzConfigPath); err != nil {
+		common.Fatalf("%s> unable to open athenz config file, error: %s", funcName, err.Error())
 	}
 
-
-	if err := config.LoadZpuConfig(config.ZpuConfig, athenzConfigPath, zpuConfigPath); err != nil {
-		log.Fatal("Main.loadConfigs> unable to open zpu config file, error: ", err.Error())
+	if err := config.LoadGlobalZpuConfig(athenzConfigPath, zpuConfigPath); err != nil {
+		common.Fatalf("%s> unable to open zpu config file, error: %s", funcName, err.Error())
 	}
 }

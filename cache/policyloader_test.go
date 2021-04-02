@@ -17,10 +17,12 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/config"
 	"gitlab.com/trialblaze/athenz-agent/token"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -28,12 +30,24 @@ import (
 )
 
 const (
-	testConfigDirPrefix = "config"
-	testPolicyDirPrefix = "policy"
-	testPolFile         = "test.pol"
-	testAthenzConf      = "athenz.conf"
-	testZpeConfigFile   = "zpe.conf"
+	configDirPrefix  = "config"
+	policyDirPrefix  = "policy"
+	polFile          = "test.pol"
+	athenzConfigPath = "testdata/athenz.conf"
+	zpeConfigPath    = "testdata/zpe.conf"
 )
+
+func setup() {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+
+	if err := config.LoadGlobalZpeConfig(zpeConfigPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
+
+	if err := config.LoadGlobalAthenzConfig(athenzConfigPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
+}
 
 func TestGetMatchObject(t *testing.T) {
 
@@ -75,60 +89,60 @@ func TestLoadDB(t *testing.T) {
 
 	a := assert.New(t)
 
-	policyDir, err := ioutil.TempDir("./", testPolicyDirPrefix)
-	a.Nil(err)
-	defer util.RemoveAll(policyDir)
+	policyDir, err := ioutil.TempDir("./", policyDirPrefix)
+	a.NoError(err)
+	defer common.RemoveAll(policyDir)
 	PolicyDirectory = policyDir
 
-	policyPath := policyDir + "/" + testPolFile
-	err = util.CreateFile(policyPath, `{"signedPolicyData":{"expires":"2017-06-09T06:11:12.125Z","modified" : "2017-06-02T06:11:12.125Z","policyData":{"domain":"sys.auth","policies":[{"assertions":[{"action":"*","effect":"ALLOW","resource":"*","role":"sys.auth:role.admin"},{"action":"*","effect":"DENY","resource":"*","role":"sys.auth:role.non-admin"}],"name":"sys.auth:policy.admin"}]},"zmsKeyId":"0","zmsSignature":"Y2HuXmgL86PL1WnleGFHwPmNEqUdWgDxmmIsDnF5f5oqakacqTtwt9JNqDV9nuJ7LnKl3zsZoDQSAtcHMu4IGA--"},"signature":"XJnQ4t33D4yr7NtUjLaWhXULFr76z.z0p3QV4uCkA5KR9L4liVRmICYwVmnXxvHAlImKlKLv7sbIHNsjBfGfCw--","keyId": "0"}`)
-	a.Nil(err)
+	policyPath := policyDir + "/" + polFile
+	err = common.CreateFile(policyPath, `{"signedPolicyData":{"expires":"2017-06-09T06:11:12.125Z","modified" : "2017-06-02T06:11:12.125Z","policyData":{"domain":"sys.auth","policies":[{"assertions":[{"action":"*","effect":"ALLOW","resource":"*","role":"sys.auth:role.admin"},{"action":"*","effect":"DENY","resource":"*","role":"sys.auth:role.non-admin"}],"name":"sys.auth:policy.admin"}]},"zmsKeyId":"0","zmsSignature":"Y2HuXmgL86PL1WnleGFHwPmNEqUdWgDxmmIsDnF5f5oqakacqTtwt9JNqDV9nuJ7LnKl3zsZoDQSAtcHMu4IGA--"},"signature":"XJnQ4t33D4yr7NtUjLaWhXULFr76z.z0p3QV4uCkA5KR9L4liVRmICYwVmnXxvHAlImKlKLv7sbIHNsjBfGfCw--","keyId": "0"}`)
+	a.NoError(err)
 
 	// check if zms and zts public keys not exist input must
 	// be invalid
-	files, _ := util.LoadFileStatus(policyDir)
+	files, _ := common.LoadFileStatus(policyDir)
 	LoadDB(files)
 	a.Len(DomainWildcardRoleDenyMap, 0)
 	a.Len(DomainStandardRoleAllowMap, 0)
 	a.Len(DomainWildcardRoleAllowMap, 0)
 	a.Len(DomainStandardRoleDenyMap, 0)
-	a.False(fileStatusMap[testPolFile].isValidPolFile)
+	a.False(fileStatusMap[polFile].isValidPolFile)
 
 	// use athenz config file to verify input and signature
 	// and then cache the policies in memory
-	configDir, err := ioutil.TempDir("./", testConfigDirPrefix)
-	a.Nil(err)
-	defer util.RemoveAll(configDir)
-	configPath := configDir + "/" + testAthenzConf
-	err = util.CreateFile(configPath, `{"zmsUrl":"https://dev.zms.athenzcompany.com:4443/","ztsUrl":"https://dev.zts.athenzcompany.com:4443/","ztsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlHZk1BMEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCZ1FETGlLY1hjUDlrMWRJcGU4bm1OS3pBaWpGcApuY0VWbEFveS8xcHordE5ETjExcDQ0MTJEREhXejhFSUNiVkE0RE16Wm1ta09URFdlUDBQSWdnNTg0RlF1SGpsCmsyOWU4VjJXT3pqQWZybGlad0dKbm1mdlBhb3FOQkNhZDI3cWFubm1MOVU3cTcvSEdRWmpMeGdoaXhGa0FtczEKaHFlbnlkb2JSVkhheHV3cDB3SURBUUFCCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}],"zmsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}]}`)
-	a.Nil(err)
-	conf, _ := config.LoadAthenzConfig(configPath)
-	config.KeyStore = conf
+	configDir, err := ioutil.TempDir("./", configDirPrefix)
+	a.NoError(err)
+	defer common.RemoveAll(configDir)
+	//configPath := configDir + "/" + testAthenzConf
+	//err = common.CreateFile(configPath, `{"zmsUrl":"https://dev.zms.athenzcompany.com:4443/","ztsUrl":"https://dev.zts.athenzcompany.com:4443/","ztsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlHZk1BMEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCZ1FETGlLY1hjUDlrMWRJcGU4bm1OS3pBaWpGcApuY0VWbEFveS8xcHordE5ETjExcDQ0MTJEREhXejhFSUNiVkE0RE16Wm1ta09URFdlUDBQSWdnNTg0RlF1SGpsCmsyOWU4VjJXT3pqQWZybGlad0dKbm1mdlBhb3FOQkNhZDI3cWFubm1MOVU3cTcvSEdRWmpMeGdoaXhGa0FtczEKaHFlbnlkb2JSVkhheHV3cDB3SURBUUFCCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}],"zmsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}]}`)
+	//a.NoError(err)
+	//conf, _ := config.LoadAthenzConfig(configPath)
+	//config.KeyStore = conf
 
-	files, _ = util.LoadFileStatus(policyDir)
+	files, _ = common.LoadFileStatus(policyDir)
 	LoadDB(files)
-	a.True(fileStatusMap[testPolFile].isValidPolFile)
+	a.True(fileStatusMap[polFile].isValidPolFile)
 
 }
 
 func TestCleanupRoleTokenCache(t *testing.T) {
 	a := assert.New(t)
 
-	var zpeConfig *config.ZpeConfig
+	var zpeConfig *config.ZpeConfiguration
 
-	dir, err := ioutil.TempDir("./", testConfigDirPrefix)
-	a.Nil(err)
-	defer util.RemoveAll(dir)
+	dir, err := ioutil.TempDir("./", configDirPrefix)
+	a.NoError(err)
+	defer common.RemoveAll(dir)
 
 	configPath := dir + "/" + testZpeConfigFile
-	err = util.CreateFile(configPath, `{"policy_files_dir": "./resource/policy","cleanup_token_interval":10,"athenz_config_dir":"./resource"}`)
-	a.Nil(err)
+	err = common.CreateFile(configPath, `{"policy_files_dir": "./resource/policy","cleanup_token_interval":10,"athenz_config_dir":"./resource"}`)
+	a.NoError(err)
 	zpeConfig, err = config.LoadZpeConfig(configPath)
-	a.Nil(err)
+	a.NoError(err)
 	a.NotNil(zpeConfig)
 	config.ZConfig = zpeConfig
 
-	lastTokenCleanup = util.CurrentTimeMillis()
+	lastTokenCleanup = common.CurrentTimeMillis()
 	oldLTC := lastTokenCleanup
 	RoleTokenCacheMap["role1"] = &token.RoleToken{ExpiryTime: time.Now().UnixNano() - (10 * int64(time.Second))}
 	RoleTokenCacheMap["role2"] = &token.RoleToken{ExpiryTime: time.Now().UnixNano() - (5 * int64(time.Second))}
@@ -140,7 +154,7 @@ func TestCleanupRoleTokenCache(t *testing.T) {
 	a.True(oldLTC == lastTokenCleanup)
 	a.Len(RoleTokenCacheMap, 4)
 
-	lastTokenCleanup = util.CurrentTimeMillis() - int64(time.Duration(15)*time.Microsecond)
+	lastTokenCleanup = common.CurrentTimeMillis() - int64(time.Duration(15)*time.Microsecond)
 	oldLTC = lastTokenCleanup
 
 	// this is right time to cleanup cached roles

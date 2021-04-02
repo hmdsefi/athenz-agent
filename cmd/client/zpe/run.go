@@ -17,18 +17,22 @@ package zpe
 
 import (
 	"fmt"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/grpc/client"
-	"log"
 )
 
 func Run() {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+	logger := log.GetLogger(common.GolangFileName())
+
 	if token == "" || access == "" || resource == "" || port == "" {
-		log.Fatal("main: token, access, resource or port is empty, please set value for all of them")
+		logger.Fatal("token, access, resource or port is empty, please set value for all of them")
 	}
 
 	val, err := client.CheckAccessWithClient(token, access, resource, host, port)
 	if err != nil {
-		log.Fatalf("CheckAccessWithClient: error when calling `CheckAccessWithToken`, error: %s", err.Error())
+		logger.Fatalf("CheckAccessWithClient: error when calling `CheckAccessWithToken`, error: %s", err.Error())
 	}
 
 	fmt.Printf("Response from server: %d", val)

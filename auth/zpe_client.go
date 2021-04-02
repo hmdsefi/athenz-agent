@@ -25,15 +25,13 @@ package auth
 
 import (
 	"crypto/tls"
-	"fmt"
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	"gitlab.com/trialblaze/athenz-agent"
 	"gitlab.com/trialblaze/athenz-agent/cache"
+	"gitlab.com/trialblaze/athenz-agent/common"
 	"gitlab.com/trialblaze/athenz-agent/config"
 	"gitlab.com/trialblaze/athenz-agent/matcher"
 	"gitlab.com/trialblaze/athenz-agent/token"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
 	"gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
 	"golang.org/x/net/context"
 	"io/ioutil"
@@ -85,23 +83,23 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 		// validation step
 		rToken, err := token.NewRoleToken(req.Token)
 		if err != nil {
-			return nil, fmt.Errorf("CheckAccessWithToken: unable to create RoleToken, error: %v", err)
+			return nil, common.Errorf("unable to create RoleToken, error: %s", err.Error())
 		}
 
 		// validate the rToken
 		pubKey := config.KeyStore.GetZtsPublicKey(rToken.KeyId)
 		ztsKey, err := new(zmssvctoken.YBase64).DecodeString(pubKey)
-		isValid, err := rToken.Validate(string(ztsKey), config.ZConfig.AllowedOffset, false)
+		isValid, err := rToken.Validate(string(ztsKey), config.ZpeConfig.Properties.AllowedOffset, false)
 		if err != nil {
-			return nil, fmt.Errorf("CheckAccessWithToken: verification of data with zts key "+
-				"having id:\"%v\" failed, Error :%v", req.Token, err)
+			return nil, common.Errorf("verification of data with zts key "+
+				"having id:\"%#v\" failed, Error: %s", req.Token, err.Error())
 		}
 		roleToken = rToken
 
 		// rToken is not valid, so check expiry first
 		if !isValid {
 			// check the rToken expiration
-			now := util.CurrentTimeMillis()
+			now := common.CurrentTimeMillis()
 			if rToken.ExpiryTime != 0 && (rToken.ExpiryTime/int64(time.Millisecond)) < now {
 				return &v1.AccessCheckResponse{AccessCheckStatus: DenyRoleTokenExpired}, nil
 			}
@@ -114,7 +112,7 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 		// check the cached token expiration
 		// if it was expired remove it from
 		// cached tokens
-		now := util.CurrentTimeMillis()
+		now := common.CurrentTimeMillis()
 		if roleToken.ExpiryTime != 0 && (roleToken.ExpiryTime/int64(time.Millisecond)) < now {
 			delete(cache.RoleTokenCacheMap, req.Token)
 			return &v1.AccessCheckResponse{AccessCheckStatus: DenyRoleTokenExpired}, nil
@@ -146,20 +144,21 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 func (permService PermissionService) GetServiceToken(ctx context.Context,
 	req *v1.ServiceTokenRequest) (*v1.ServiceTokenResponse, error) {
 
-	tlsConfig, err := getTLSConfigFromFiles(config.ZConfig.KeyFilePath, config.ZConfig.CertFilePath)
+	tlsConfig, err := getTLSConfigFromFiles(config.ZpeConfig.Properties.KeyFilePath, config.ZpeConfig.Properties.CertFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("GetServiceToken: unable to load TLS Config, error: %v", err)
+		return nil, common.Errorf("unable to load TLS Config, error: %s", err.Error())
 	}
 
-	minExpiryTime := config.ZConfig.TokenExpirationMin * 60
-	maxExpiryTime := config.ZConfig.TokenExpirationMax * 60
+	minExpiryTime := config.ZpeConfig.Properties.TokenExpirationMin * 60
+	maxExpiryTime := config.ZpeConfig.Properties.TokenExpirationMax * 60
 
 	transport := &http.Transport{TLSClientConfig: tlsConfig}
-	client := zts.NewClient(config.KeyStore.ZtsUrl, transport)
+	client := zts.NewClient(config.KeyStore.Properties.ZtsUrl, transport)
 
-	roleToken, err := client.GetRoleToken(zts.DomainName(config.ZConfig.DomainName), zts.EntityList(config.ZConfig.RoleNames), &minExpiryTime, &maxExpiryTime, "")
+	roleToken, err := client.GetRoleToken(zts.DomainName(config.ZpeConfig.Properties.DomainName),
+		zts.EntityList(config.ZpeConfig.Properties.RoleNames), &minExpiryTime, &maxExpiryTime, "")
 	if err != nil {
-		return nil, fmt.Errorf("GetServiceToken: unable to get roleToken, error: %v", err)
+		return nil, common.Errorf("unable to get roleToken, error: %s", err.Error())
 	}
 
 	return &v1.ServiceTokenResponse{Token: roleToken.Token}, nil
@@ -186,7 +185,7 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 
 	action = strings.ToLower(action)
 	resource = strings.ToLower(resource)
-	resource = util.StripDomainPrefix(resource, domain, "")
+	resource = common.StripDomainPrefix(resource, domain, "")
 
 	// Note: if domain in token doesn't match
 	// domain in resource then there will be
@@ -298,13 +297,13 @@ func matchAssertions(asserts []map[string]interface{}, action, resource string) 
 	for _, strAssert := range asserts {
 
 		// ex: "mod*"
-		match = reflect.ValueOf(strAssert[athenz_agent.ZpeActionMatchStruct]).Interface().(matcher.ZpeMatch)
+		match = reflect.ValueOf(strAssert[common.ZpeActionMatchStruct]).Interface().(matcher.ZpeMatch)
 		if !match.Match(action) {
 			continue
 		}
 
 		// ex: "weather:service.storage.tenant.sports.*"
-		match = reflect.ValueOf(strAssert[athenz_agent.ZpeResourceMatchStruct]).Interface().(matcher.ZpeMatch)
+		match = reflect.ValueOf(strAssert[common.ZpeResourceMatchStruct]).Interface().(matcher.ZpeMatch)
 		if !match.Match(resource) {
 			continue
 		}
@@ -342,7 +341,7 @@ func actionByWildCardRole(action, resource string, roles []string,
 			}
 
 			assert = asserts[0]
-			match = reflect.ValueOf(assert[athenz_agent.ZpeRoleMatchStruct]).Interface().(matcher.ZpeMatch)
+			match = reflect.ValueOf(assert[common.ZpeRoleMatchStruct]).Interface().(matcher.ZpeMatch)
 			if !match.Match(role) {
 				continue
 			}
@@ -369,12 +368,12 @@ func actionByWildCardRole(action, resource string, roles []string,
 func getTLSConfigFromFiles(keyFilePath, certFilePath string) (*tls.Config, error) {
 	keyPem, err := ioutil.ReadFile(keyFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("GetServiceToken:getTLSConfigFromFiles: unable to read keyFile, error: %v", err)
+		return nil, common.Errorf("unable to read keyFile, error: %s", err.Error())
 	}
 
 	certPem, err := ioutil.ReadFile(certFilePath)
 	if err != nil {
-		return nil, fmt.Errorf("GetServiceToken:getTLSConfigFromFiles: unable to read certFile, error: %v", err)
+		return nil, common.Errorf("unable to read certFile, error: %s", err.Error())
 	}
 
 	return getTLSConfig(keyPem, certPem)
@@ -384,8 +383,8 @@ func getTLSConfigFromFiles(keyFilePath, certFilePath string) (*tls.Config, error
 func getTLSConfig(keyPem, certPem []byte) (*tls.Config, error) {
 	clientCert, err := tls.X509KeyPair(certPem, keyPem)
 	if err != nil {
-		return nil, fmt.Errorf("GetServiceToken:getTLSConfig: unable to formulate clientCert "+
-			"from keyPem and certPem, error: %v", err)
+		return nil, common.Errorf("unable to formulate clientCert "+
+			"from keyPem and certPem, error: %s", err.Error())
 	}
 
 	tlsConfig := &tls.Config{}

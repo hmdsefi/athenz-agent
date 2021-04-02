@@ -18,14 +18,18 @@ package log
 import (
 	rotateLogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
+	"gitlab.com/trialblaze/athenz-agent/common"
 	"os"
 	"sync"
-	"time"
+)
+
+const (
+	logFilename = "log"
 )
 
 var (
 	singleton     sync.Once
-	log *logrusInitializer
+	log = new(logrusInitializer)
 )
 
 type (
@@ -55,43 +59,49 @@ func GetLogger(fileName string) Logger {
 	return logrusLogger{fileName: fileName}
 }
 
-func (l logrusLogger) Fatal(funcName string, msg string) {
+func (l logrusLogger) Fatal(msg string) {
 	log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
-		"Func":     funcName,
+		"Func":     common.CallerFuncName(),
 	}).Fatal(msg)
 }
 
-func (l logrusLogger) Info(funcName string, msg string) {
+func (l logrusLogger) Fatalf(format string, params ...interface{}) {
 	log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
-		"Func":     funcName,
+		"Func":     common.CallerFuncName(),
+	}).Fatalf(format, params...)
+}
+
+func (l logrusLogger) Info(msg string) {
+	log.logger.WithFields(logrus.Fields{
+		"FileName": l.fileName,
+		"Func":     common.CallerFuncName(),
 	}).Info(msg)
 }
 
-func (l logrusLogger) Error(funcName string, msg string) {
+func (l logrusLogger) Error(msg string) {
 	log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
-		"Func":     funcName,
+		"Func":     common.CallerFuncName(),
 	}).Error(msg)
 }
 
-func (l logrusLogger) Debug(funcName string, msg string) {
+func (l logrusLogger) Debug(msg string) {
 	log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
-		"Func":     funcName,
+		"Func":     common.CallerFuncName(),
 	}).Debug(msg)
 }
 
-func (l logrusLogger) Trace(funcName string, msg string) {
+func (l logrusLogger) Trace(msg string) {
 	log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
-		"Func":     funcName,
+		"Func":     common.CallerFuncName(),
 	}).Trace(msg)
 }
 
 func NewLogrusInitializer() Initializer {
-	log := new(logrusInitializer)
 	return log
 }
 
@@ -122,15 +132,20 @@ func (l *logrusInitializer) InitialLog(level Level) Rotator {
 }
 
 // SetupRotation creates a custom output writer for logger.
-func (r *logrusLogRotator) SetupRotation(properties Properties) error {
+func (r *logrusLogRotator) SetupRotation(provider common.LogConfigProvider) {
+
+	// create log directory
+	if err := common.CreateAllDirectories(provider.GetPath()); err != nil {
+		r.logrusInit.logger.Fatal(err)
+	}
 
 	// log rotation config
 	writer, err := rotateLogs.New(
-		properties.Path+properties.FilenamePattern,
-		rotateLogs.WithLinkName(properties.Path),
-		rotateLogs.WithMaxAge(time.Duration(properties.MaxAge)*time.Second),
-		rotateLogs.WithRotationSize(int64(properties.MaxSize)),
-		rotateLogs.WithRotationTime(time.Duration(properties.RotationTime)*time.Second),
+		provider.GetPath()+string(os.PathSeparator)+logFilename+provider.GetFilenamePattern(),
+		rotateLogs.WithLinkName(provider.GetPath()),
+		rotateLogs.WithMaxAge(provider.GetMaxAge()),
+		rotateLogs.WithRotationSize(provider.GetMaxSize()),
+		rotateLogs.WithRotationTime(provider.GetRotationTime()),
 	)
 	if err != nil {
 		r.logrusInit.logger.Fatal(err)
@@ -138,6 +153,4 @@ func (r *logrusLogRotator) SetupRotation(properties Properties) error {
 
 	// set new output writer
 	r.logrusInit.logger.SetOutput(writer)
-
-	return nil
 }

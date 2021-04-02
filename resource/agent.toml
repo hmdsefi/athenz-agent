@@ -1,5 +1,0 @@
-"root_dir" = "/home/hamed/projects/agent-bin"
-"config_dir" = "config"
-"zpe_config_file" = "zpe.conf"
-"zpu_config_file" = "zpu.conf"
-"athenz_config_file" = "athenz.conf"

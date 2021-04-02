@@ -16,7 +16,7 @@
  *
  */
 
-package athenz_agent
+package common
 
 const (
 	ZpeFieldPolicyName = "polname"

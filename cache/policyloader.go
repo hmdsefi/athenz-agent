@@ -29,12 +29,12 @@ import (
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	zpuUtil "github.com/yahoo/athenz/utils/zpe-updater/util"
-	zpeconst "gitlab.com/trialblaze/athenz-agent"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/config"
 	"gitlab.com/trialblaze/athenz-agent/matcher"
 	"gitlab.com/trialblaze/athenz-agent/token"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
-	"log"
+
 	"os"
 	"reflect"
 	"regexp"
@@ -42,24 +42,28 @@ import (
 	"time"
 )
 
-var fileStatusMap = make(map[string]*zpeFileStatus)
-var lastTokenCleanup = util.CurrentTimeMillis()
-var PolicyDirectory string
+var (
+	logger = log.GetLogger(common.GolangFileName())
+	fileStatusMap = make(map[string]*zpeFileStatus)
+ lastTokenCleanup = common.CurrentTimeMillis()
+ PolicyDirectory string
 
 // key is the domain name, value is a map keyed by role name with list of assertions
-var DomainStandardRoleAllowMap = make(map[string]*RoleMap)
+ DomainStandardRoleAllowMap = make(map[string]*RoleMap)
 
 // wild card role map, keys and values same as domRoleMap above
-var DomainWildcardRoleAllowMap = make(map[string]*RoleMap)
+ DomainWildcardRoleAllowMap = make(map[string]*RoleMap)
 
 // key is the domain name, value is a map keyed by role name with list of assertions
-var DomainStandardRoleDenyMap = make(map[string]*RoleMap)
+ DomainStandardRoleDenyMap = make(map[string]*RoleMap)
 
 // wild card role map, keys and values same as domRoleMap above
-var DomainWildcardRoleDenyMap = make(map[string]*RoleMap)
+ DomainWildcardRoleDenyMap = make(map[string]*RoleMap)
 
 // cache of active Role Tokens
-var RoleTokenCacheMap = make(map[string]*token.RoleToken)
+ RoleTokenCacheMap = make(map[string]*token.RoleToken)
+)
+
 
 type zpeFileStatus struct {
 	fileName         string
@@ -96,7 +100,7 @@ func getMatchObject(value string) matcher.ZpeMatch {
 // into the policy domain map.
 func LoadDB(files []os.FileInfo) {
 	if files == nil {
-		log.Println("loadDb: no policy files to load")
+		logger.Info("loadDb: no policy files to load")
 		return
 	}
 	for _, policyFile := range files {
@@ -130,7 +134,7 @@ func LoadDB(files []os.FileInfo) {
 		}
 		err := loadFile(policyFile)
 		if err != nil {
-			log.Println(err)
+			logger.Error(err.Error())
 		}
 	}
 }
@@ -146,10 +150,15 @@ func loadFile(file os.FileInfo) error {
 	}
 
 	readFile, err := os.OpenFile(path, os.O_RDONLY, 0444)
-	defer readFile.Close()
 	if err != nil {
 		return fmt.Errorf("loadFile: Cannot open file: %v , Error: %v", path, err)
 	}
+	defer func() {
+		err := readFile.Close()
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	}()
 
 	var domainSignedPolicyData *zts.DomainSignedPolicyData
 	err = json.NewDecoder(readFile).Decode(&domainSignedPolicyData)
@@ -181,7 +190,7 @@ func loadFile(file os.FileInfo) error {
 		return fmt.Errorf("loadFile: verification of data with zts key having id:\"%v\" failed, Error :%v",
 			domainSignedPolicyData.KeyId, err)
 	}
-	err = util.Verify(input, domainSignedPolicyData.Signature, string(ztsKey))
+	err = common.Verify(input, domainSignedPolicyData.Signature, string(ztsKey))
 	if err == nil {
 		verified = true
 	}
@@ -201,7 +210,7 @@ func loadFile(file os.FileInfo) error {
 				signedPolicyData.ZmsKeyId, err)
 		}
 
-		err = util.Verify(inputPolicy, signedPolicyData.ZmsSignature, string(zmsKey))
+		err = common.Verify(inputPolicy, signedPolicyData.ZmsSignature, string(zmsKey))
 		if err != nil {
 			verified = false
 		}
@@ -225,19 +234,19 @@ func loadFile(file os.FileInfo) error {
 	for _, policy := range policyData.Policies {
 		for _, assertion := range policy.Assertions {
 			strAssert := make(map[string]interface{})
-			strAssert[zpeconst.ZpeFieldPolicyName] = policy.Name
-			strAssert[zpeconst.ZpeActionMatchStruct] = getMatchObject(assertion.Action)
+			strAssert[common.ZpeFieldPolicyName] = policy.Name
+			strAssert[common.ZpeActionMatchStruct] = getMatchObject(assertion.Action)
 
-			rsrc := util.StripDomainPrefix(assertion.Resource, domainName, assertion.Resource)
-			strAssert[zpeconst.ZpeFieldResource] = rsrc
-			strAssert[zpeconst.ZpeResourceMatchStruct] = getMatchObject(rsrc)
+			rsrc := common.StripDomainPrefix(assertion.Resource, domainName, assertion.Resource)
+			strAssert[common.ZpeFieldResource] = rsrc
+			strAssert[common.ZpeResourceMatchStruct] = getMatchObject(rsrc)
 
-			pRoleName := util.StripDomainPrefix(assertion.Role, domainName, assertion.Role)
+			pRoleName := common.StripDomainPrefix(assertion.Role, domainName, assertion.Role)
 			reg := regexp.MustCompile("^role.")
 			pRoleName = reg.ReplaceAllString(pRoleName, "$1")
-			strAssert[zpeconst.ZpeFieldRole] = pRoleName
+			strAssert[common.ZpeFieldRole] = pRoleName
 			matchStruct := getMatchObject(pRoleName)
-			strAssert[zpeconst.ZpeRoleMatchStruct] = matchStruct
+			strAssert[common.ZpeRoleMatchStruct] = matchStruct
 
 			if assertion.Effect != nil && assertion.Effect.String() == "DENY" {
 				if reflect.TypeOf(matchStruct).Name() == "ZpeMatchEqual" {
@@ -289,7 +298,7 @@ func computeIfAbsent(key string, roleMap map[string][]map[string]interface{}, ma
 // be prepared for caching policies
 func CleanupRoleTokenCache() {
 	//is it time to cleanup
-	now := util.CurrentTimeMillis()
+	now := common.CurrentTimeMillis()
 	if now < int64(time.Duration(config.ZpeConfig.Properties.CleanupTokenInterval)*time.Microsecond)+lastTokenCleanup {
 		return
 	}

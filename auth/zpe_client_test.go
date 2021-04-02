@@ -18,15 +18,15 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/ardielle/ardielle-go/rdl"
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	zpuUtil "github.com/yahoo/athenz/utils/zpe-updater/util"
 	"gitlab.com/trialblaze/athenz-agent/cache"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
 	"gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
 	"golang.org/x/net/context"
 	"io/ioutil"
@@ -37,38 +37,51 @@ import (
 )
 
 const (
-	testPolicyDir       = "../resource"
-	testPolicyDirPrefix = "policy"
-	testPolicyFile      = "../resource/test_data/angler.pol"
-	testZmsPrivateKey0  = "../resource/test_data/zms_private_k0.pem"
-	testZtsPrivateKey0  = "../resource/test_data/zts_private_k0.pem"
-	testAthenzConfig    = "../resource/test_data/athenz.conf"
-	testZpeConfig       = "../resource/test_data/zpe.conf"
+	tmpDir          = "testdata"
+	policyDirPrefix = "policy"
+	policyFile      = "testdata/angler.pol"
+	zmsPrivateKey0  = "testdata/zms_private_k0.pem"
+	ztsPrivateKey0  = "testdata/zts_private_k0.pem"
+	athenzConfigPath    = "testdata/athenz.json"
+	zpeConfigPath       = "testdata/zpe.toml"
 )
 
 var testTempFolder string
 
 func preparePolicyFiles(expiry time.Time) error {
-	readFile, err := os.OpenFile(testPolicyFile, os.O_RDONLY, 0444)
-	defer readFile.Close()
+
+	log.NewLogrusInitializer().InitialLog(log.Info)
+
+	if err := config.LoadGlobalZpeConfig(zpeConfigPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
+
+	if err := config.LoadGlobalAthenzConfig(athenzConfigPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
+
+	readFile, err := os.OpenFile(policyFile, os.O_RDONLY, 0444)
+	defer func() {
+		_ = readFile.Close()
+	}()
 	if err != nil {
-		return fmt.Errorf("cannot open file: %v , Error: %v", testPolicyFile, err)
+		return common.Errorf("cannot open file: %#v , Error: %s", policyFile, err.Error())
 	}
 
 	var domainSignedPolicyData *zts.DomainSignedPolicyData
 	err = json.NewDecoder(readFile).Decode(&domainSignedPolicyData)
 	if err != nil {
-		return fmt.Errorf("unable to decode policy file: %v, Error: %v", testPolicyFile, err)
+		return common.Errorf("unable to decode policy file: %#v, Error: %s", policyFile, err.Error())
 	}
 
 	if expiry.UnixNano() > 0 {
 		expiry = expiry.Add(48 * time.Hour)
-		domainSignedPolicyData.SignedPolicyData.Expires = rdl.Timestamp{expiry}
+		domainSignedPolicyData.SignedPolicyData.Expires = rdl.Timestamp{Time: expiry}
 	}
 
-	zmsData, err := ioutil.ReadFile(testZmsPrivateKey0)
+	zmsData, err := ioutil.ReadFile(zmsPrivateKey0)
 	if err != nil {
-		return fmt.Errorf("cannot open zms private key file")
+		return common.Error("cannot open zms private key file")
 	}
 
 	signer, _ := zmssvctoken.NewSigner(zmsData)
@@ -77,9 +90,9 @@ func preparePolicyFiles(expiry time.Time) error {
 	domainSignedPolicyData.SignedPolicyData.ZmsSignature = signature
 	domainSignedPolicyData.SignedPolicyData.ZmsKeyId = "0"
 
-	ztsData, err := ioutil.ReadFile(testZtsPrivateKey0)
+	ztsData, err := ioutil.ReadFile(ztsPrivateKey0)
 	if err != nil {
-		return fmt.Errorf("cannot open zts private key file")
+		return common.Error("cannot open zts private key file")
 	}
 
 	signer, _ = zmssvctoken.NewSigner(ztsData)
@@ -88,26 +101,26 @@ func preparePolicyFiles(expiry time.Time) error {
 	domainSignedPolicyData.Signature = signature
 	domainSignedPolicyData.KeyId = "0"
 
-	testTempFolder, err = ioutil.TempDir(testPolicyDir, testPolicyDirPrefix)
+	testTempFolder, err = ioutil.TempDir(tmpDir, policyDirPrefix)
 	if err != nil {
-		return fmt.Errorf("unable to create policy directory")
+		return common.Errorf("unable to create policy directory: %s", err.Error())
 	}
 
 	data, _ := json.Marshal(domainSignedPolicyData)
-	err = util.CreateFile(testTempFolder+"/angler.pol", string(data))
+	err = common.CreateFile(testTempFolder+"/angler.pol", string(data))
 	if err != nil {
-		return fmt.Errorf("unable to create policy file")
+		return common.Error("unable to create policy file")
 	}
 	return nil
 }
 
 func createRoleToken(role, domain string) string {
-	generatedToken := strconv.FormatInt((util.CurrentTimeMillis()/1000-30)*int64(time.Second), 10)
-	expiration := strconv.FormatInt((util.CurrentTimeMillis()/1000+300)*int64(time.Second), 10)
+	generatedToken := strconv.FormatInt((common.CurrentTimeMillis()/1000-30)*int64(time.Second), 10)
+	expiration := strconv.FormatInt((common.CurrentTimeMillis()/1000+300)*int64(time.Second), 10)
 	signedToken := "v=S1;d=" + domain + ";h=localhost" + ";r=" + role +
 		";t=" + generatedToken + ";e=" + expiration + ";k=0"
 
-	data, _ := ioutil.ReadFile(testZtsPrivateKey0)
+	data, _ := ioutil.ReadFile(ztsPrivateKey0)
 
 	signer, _ := zmssvctoken.NewSigner(data)
 	signature, _ := signer.Sign(signedToken)
@@ -120,10 +133,7 @@ func createRoleToken(role, domain string) string {
 func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Time{})
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -137,7 +147,7 @@ func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(9))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -146,10 +156,7 @@ func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -163,7 +170,7 @@ func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -172,10 +179,7 @@ func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenDeny(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -189,7 +193,7 @@ func TestPermissionService_CheckAccessWithTokenDeny(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(1))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -198,10 +202,7 @@ func TestPermissionService_CheckAccessWithTokenDeny(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenStartWith(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -215,7 +216,7 @@ func TestPermissionService_CheckAccessWithTokenStartWith(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -224,10 +225,7 @@ func TestPermissionService_CheckAccessWithTokenStartWith(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenWildcardDeny(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -241,7 +239,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardDeny(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(1))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -250,10 +248,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardDeny(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenWildcardAllow(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -267,7 +262,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardAllow(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -276,10 +271,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardAllow(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenMatchAllAllow(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -293,7 +285,7 @@ func TestPermissionService_CheckAccessWithTokenMatchAllAllow(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -302,10 +294,7 @@ func TestPermissionService_CheckAccessWithTokenMatchAllAllow(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenMatchRegexAllow(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -319,7 +308,7 @@ func TestPermissionService_CheckAccessWithTokenMatchRegexAllow(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -328,10 +317,7 @@ func TestPermissionService_CheckAccessWithTokenMatchRegexAllow(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenFullRegexAllow1(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -345,7 +331,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow1(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -354,10 +340,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow1(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenFullRegexAllow2(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -371,7 +354,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow2(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -380,10 +363,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow2(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenFullRegexAllow3(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -397,7 +377,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow3(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)
@@ -406,10 +386,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow3(t *testing.T) {
 func TestPermissionService_CheckAccessWithTokenFullRegexAllow4(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Now())
-	a.Nil(err)
-
-	config.KeyStore, _ = config.LoadAthenzConfig(testAthenzConfig)
-	config.ZConfig, _ = config.LoadZpeConfig(testZpeConfig)
+	a.NoError(err)
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -423,7 +400,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow4(t *testing.T) {
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
-	a.Nil(err)
+	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(0))
 
 	_ = os.RemoveAll(testTempFolder)

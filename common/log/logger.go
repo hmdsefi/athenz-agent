@@ -16,37 +16,37 @@
 package log
 
 import (
-	"errors"
+	"gitlab.com/trialblaze/athenz-agent/common"
 )
 
 const (
 	// Fatal level.  Logs and then calls `logger.Exit(1)`.
-	Fatal = 1
+	Fatal Level = 1
 	// Error level. Used for errors that should definitely be noted.
-	Error = 2
+	Error Level= 2
 	// Info level. General operational entries about what's going on inside the application.
-	Info = 3
+	Info Level= 3
 	// Debug level. Usually only enabled when debugging. Very verbose logging.
-	Debug = 4
+	Debug Level= 4
 	// Trace level. Designates finer-grained informational events than the Debug.
-	Trace = 5
+	Trace Level= 5
 )
 
 var (
 	string2Level = map[string]Level{
-		"fatal": 1,
-		"error": 2,
-		"info":  3,
-		"debug": 4,
-		"trace": 5,
+		"fatal": Fatal,
+		"error": Error,
+		"info":  Info,
+		"debug": Debug,
+		"trace": Trace,
 	}
 
 	level2String = map[Level]string{
-		1: "fatal",
-		2: "error",
-		3: "info",
-		4: "debug",
-		5: "trace",
+		Fatal: "fatal",
+		Error: "error",
+		Info: "info",
+		Debug: "debug",
+		Trace: "trace",
 	}
 )
 
@@ -55,11 +55,12 @@ type (
 
 	// Logger is a general interface for logging.
 	Logger interface {
-		Fatal(funcName string, msg string)
-		Info(funcName string, msg string)
-		Error(funcName string, msg string)
-		Debug(funcName string, msg string)
-		Trace(funcName string, msg string)
+		Fatal(msg string)
+		Fatalf(format string, params ...interface{})
+		Info(msg string)
+		Error(msg string)
+		Debug(msg string)
+		Trace(msg string)
 	}
 
 	// Initializer the interface that wrap log init function.
@@ -71,18 +72,9 @@ type (
 
 	// Rotator the interface to wrap log rotation config.
 	Rotator interface {
-		SetupRotation(properties Properties) error
+		SetupRotation(provider common.LogConfigProvider)
 	}
 
-	// Properties is log configuration properties
-	Properties struct {
-		Level           Level
-		Path            string
-		MaxAge          uint32
-		MaxSize         uint32
-		FilenamePattern string
-		RotationTime    uint32
-	}
 )
 
 func (l Level) String() string {
@@ -93,10 +85,10 @@ func (l Level) String() string {
 	return str
 }
 
-func GetLevel(in string) (Level, error) {
+func GetLevel(in string) Level {
 	level, ok := string2Level[in]
 	if !ok {
-		return 0, errors.New("invalid input")
+		common.Fatalf("invalid input, level: %s", in)
 	}
-	return level, nil
+	return level
 }

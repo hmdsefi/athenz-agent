@@ -20,10 +20,9 @@
 package token
 
 import (
-	"fmt"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/common/util"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -42,6 +41,10 @@ const (
 	tagSignature             = "s"
 	tagKeyId                 = "k"
 	tagHostName              = "h"
+)
+
+var (
+	logger = log.GetLogger(common.GolangFileName())
 )
 
 type RoleToken struct {
@@ -63,31 +66,29 @@ type RoleToken struct {
 	AthenzTokenMaxExpiry  int64    // maximum lifetime of the roleToken
 }
 
-// validate roleToken by checking field like public key,
-// signature and unsignedToken this fields must not be
-// empty. checking generated time and expiry time and then
-// verify the roleToken by checking public key and hashing
-// of data and signature.
+// validate roleToken by checking field like public key, signature and unsignedToken
+// this fields must not be empty. checking generated time and expiry time and then
+// verify the roleToken by checking public key and hashing of data and signature.
 func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allowNoExpiry bool) (bool, error) {
 
 	// check if data and signature exists
 	if roleToken.UnsignedToken == "" || roleToken.Signature == "" {
-		return false, fmt.Errorf("RoleToken:Validate: missing data/signature component, data: %s, signature: %s",
+		return false, common.Errorf("missing data/signature component, data: %s, signature: %s",
 			roleToken.UnsignedToken, roleToken.Signature)
 	}
 
 	// check if public key exists
 	if publicKey == "" {
-		return false, fmt.Errorf("RoleToken:Validate: no public key provided, data: %s", roleToken.UnsignedToken)
+		return false, common.Errorf("no public key provided, data: %s", roleToken.UnsignedToken)
 	}
 
-	now := util.CurrentTimeMillis() / 1000
+	now := common.CurrentTimeMillis() / 1000
 
 	// make sure the token does not have a timestamp in the
 	// future we'll allow the configured offset between servers.
 	if roleToken.GenerationTime != 0 &&
 		(roleToken.GenerationTime/int64(time.Second))-allowedOffset > now {
-		return false, fmt.Errorf("RoleToken:Validate: token has future generatedTime, generated time: %v, "+
+		return false, common.Errorf("token has future generatedTime, generated time: %v, "+
 			"now: %v, allowed offset: %d", roleToken.GenerationTime, time.Unix(0, now), allowedOffset)
 	}
 
@@ -97,30 +98,31 @@ func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allo
 	if roleToken.ExpiryTime != 0 || !allowNoExpiry {
 		expiry := roleToken.ExpiryTime / int64(time.Second)
 		if expiry < now {
-			return false, fmt.Errorf("RoleToken:Validate: token has expired, expiry time: %v, now: %v",
+			return false, common.Errorf("token has expired, expiry time: %v, now: %v",
 				roleToken.ExpiryTime, time.Unix(0, now))
 		}
 
 		if expiry > now+(roleToken.AthenzTokenMaxExpiry*24*60*60)+allowedOffset {
-			return false, fmt.Errorf("RoleToken:Validate: token expires too far int the future, expiryTime: %v"+
+			return false, common.Errorf("token expires too far in the future, expiryTime: %v"+
 				", current time: %v, max expiry: %d days, allowed offset: %d", roleToken.ExpiryTime,
 				time.Unix(0, now), roleToken.AthenzTokenMaxExpiry, allowedOffset)
 		}
 
 	}
 
-	err := util.Verify(roleToken.UnsignedToken, roleToken.Signature, publicKey)
-	if err == nil {
-		return true, nil
+	err := common.Verify(roleToken.UnsignedToken, roleToken.Signature, publicKey)
+	if err != nil {
+		logger.Error(err.Error())
+		return false, err
 	}
-	return false, nil
+	return true, nil
 }
 
 // create new roleToken by a roleToken string that created
 // by zpe
 func NewRoleToken(signedToken string) (*RoleToken, error) {
 	if signedToken == "" {
-		return nil, fmt.Errorf("NewRoleToken: input String signedToken must not be empty")
+		return nil, common.Error("input String signedToken must not be empty")
 	}
 
 	var err error
@@ -137,7 +139,7 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 	for _, part := range parts {
 		inner := strings.Split(part, "=")
 		if len(inner) != 2 {
-			return nil, fmt.Errorf("NewRoleToken: malformed token field %s", part)
+			return nil, common.Errorf("malformed token field %s",part)
 		}
 
 		switch inner[0] {
@@ -161,20 +163,20 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 			roleToken.Signature = inner[1]
 		case tagDomainCompleteRoleSet:
 			if i, err := strconv.Atoi(inner[1]); err != nil {
-				return nil, fmt.Errorf("NewRoleToken: unable to extract roletoken, error: %v", err)
+				return nil, common.Errorf("unable to extract roletoken, error: %v", err)
 			} else if i == 1 {
 				roleToken.DomainCompleteRoleSet = true
 			}
 		case tagGenerationTime:
 			if roleToken.GenerationTime, err = strconv.ParseInt(inner[1], 10, 64); err != nil {
-				return nil, fmt.Errorf("NewRoleToken: cannot convert generation timestamp to int64")
+				return nil, common.Errorf("cannot convert generation timestamp to int64")
 			}
 		case tagExpireTime:
 			if roleToken.ExpiryTime, err = strconv.ParseInt(inner[1], 10, 64); err != nil {
-				return nil, fmt.Errorf("NewRoleToken: cannot convert expiry timestamp to int64")
+				return nil, common.Errorf("cannot convert expiry timestamp to int64")
 			}
 		default:
-			log.Println("Unknown ntoken field: ", inner[1])
+			logger.Info("Unknown ntoken field: " + inner[1])
 		}
 	}
 
@@ -187,11 +189,11 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 	// the authenticate phase but now we'll make sure
 	// that domain and roles are present
 	if roleToken.Domain == "" {
-		return nil, fmt.Errorf("NewRoleToken: signedToken does not contain required domain component")
+		return nil, common.Error("signedToken does not contain required domain component")
 	}
 
 	if roleNames == "" {
-		return nil, fmt.Errorf("NewRoleToken: signedToken does not contain required roles component")
+		return nil, common.Error("signedToken does not contain required roles component")
 	}
 
 	roleToken.RoleNames = strings.Split(roleNames, ",")
@@ -203,7 +205,7 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 func asTime(s, name string) (time.Time, error) {
 	n, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("invalid field inner[1] '%s' for field '%s'", s, name)
+		return time.Time{}, common.Errorf("invalid field inner[1] '%s' for field '%s'", s, name)
 	}
 	return time.Unix(n, 0), nil
 }
