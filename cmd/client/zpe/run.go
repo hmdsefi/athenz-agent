@@ -21,7 +21,7 @@ import (
 	"gitlab.com/trialblaze/athenz-agent/grpc/client"
 )
 
-func Run() {
+func run() {
 	log.NewLogrusInitializer().InitialLog(log.Info)
 	logger := log.GetLogger(common.GolangFileName())
 

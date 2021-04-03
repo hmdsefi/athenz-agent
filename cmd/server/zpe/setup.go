@@ -71,7 +71,7 @@ func BuildCLI() *cli.App {
 			Aliases: []string{""},
 			Usage:   "start agent server",
 			Action: func(c *cli.Context) {
-				Run()
+				run()
 			},
 		},
 	}

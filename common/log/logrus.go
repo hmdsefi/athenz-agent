@@ -18,6 +18,7 @@ import (
 	rotateLogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	"gitlab.com/trialblaze/athenz-agent/common"
+	"io"
 	"os"
 	"sync"
 )
@@ -27,8 +28,8 @@ const (
 )
 
 var (
-	singleton     sync.Once
-	log = new(logrusInitializer)
+	singleton sync.Once
+	log       = new(logrusInitializer)
 )
 
 type (
@@ -37,6 +38,7 @@ type (
 	logrusLogger struct {
 		// the '*.go' file that logging is happening there.
 		fileName string
+		log      *logrusInitializer
 	}
 
 	// logrusInitializer is an implementation of Initializer for logrus.
@@ -55,46 +57,46 @@ type (
 
 // GetLogger returns a Logger for a specific `.go` file.
 func GetLogger(fileName string) Logger {
-	return logrusLogger{fileName: fileName}
+	return &logrusLogger{fileName: fileName, log: log}
 }
 
-func (l logrusLogger) Fatal(msg string) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Fatal(msg string) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Fatal(msg)
 }
 
-func (l logrusLogger) Fatalf(format string, params ...interface{}) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Fatalf(format string, params ...interface{}) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Fatalf(format, params...)
 }
 
-func (l logrusLogger) Info(msg string) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Info(msg string) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Info(msg)
 }
 
-func (l logrusLogger) Error(msg string) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Error(msg string) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Error(msg)
 }
 
-func (l logrusLogger) Debug(msg string) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Debug(msg string) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Debug(msg)
 }
 
-func (l logrusLogger) Trace(msg string) {
-	log.logger.WithFields(logrus.Fields{
+func (l *logrusLogger) Trace(msg string) {
+	l.log.logger.WithFields(logrus.Fields{
 		"FileName": l.fileName,
 		"Func":     common.CallerFuncName(),
 	}).Trace(msg)
@@ -104,13 +106,13 @@ func NewLogrusInitializer() Initializer {
 	return log
 }
 
-// InitialLog initializes logrus logger.
+// InitialLog initializes logrus log.
 //
 // InitialLog Accepts  log level as input param and will creates
 // a logrus instance. This initialization happens just once in entire
 // application lifecycle.
 func (l *logrusInitializer) InitialLog(level Level) Rotator {
-	// initial logrus logger just once in entire application lifecycle
+	// initial logrus log just once in entire application lifecycle
 	singleton.Do(func() {
 		log.logger =logrus.New()
 		log.logger.SetFormatter(&logrus.JSONFormatter{})
@@ -130,7 +132,7 @@ func (l *logrusInitializer) InitialLog(level Level) Rotator {
 	}
 }
 
-// SetupRotation creates a custom output writer for logger.
+// SetupRotation creates a custom output writer for log.
 func (r *logrusLogRotator) SetupRotation(provider common.LogConfigProvider) {
 
 	// create log directory
@@ -141,7 +143,7 @@ func (r *logrusLogRotator) SetupRotation(provider common.LogConfigProvider) {
 	// log rotation config
 	writer, err := rotateLogs.New(
 		provider.GetPath()+string(os.PathSeparator)+logFilename+provider.GetFilenamePattern(),
-		rotateLogs.WithLinkName(provider.GetPath()),
+		rotateLogs.WithLinkName(provider.GetPath()+string(os.PathSeparator)+logFilename),
 		rotateLogs.WithMaxAge(provider.GetMaxAge()),
 		rotateLogs.WithRotationSize(provider.GetMaxSize()),
 		rotateLogs.WithRotationTime(provider.GetRotationTime()),
@@ -150,6 +152,8 @@ func (r *logrusLogRotator) SetupRotation(provider common.LogConfigProvider) {
 		r.logrusInit.logger.Fatal(err)
 	}
 
-	// set new output writer
-	r.logrusInit.logger.SetOutput(writer)
+	// set new output writer, consul logs are crucial so lets
+	// write logs in both file and stout
+	multiWriter := io.MultiWriter(writer, os.Stdout)
+	r.logrusInit.logger.SetOutput(multiWriter)
 }

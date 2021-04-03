@@ -26,7 +26,7 @@ import (
 	"sync"
 )
 
-func Run() {
+func run() {
 
 	var cacheError string
 	var waitGrp sync.WaitGroup

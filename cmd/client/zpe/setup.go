@@ -73,7 +73,7 @@ func BuildCLI() *cli.App {
 			Aliases: []string{""},
 			Usage:   "check an access to a resource by client api",
 			Action: func(c *cli.Context) {
-				Run()
+				run()
 			},
 		},
 	}

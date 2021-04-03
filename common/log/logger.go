@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	// Fatal level.  Logs and then calls `logger.Exit(1)`.
+	// Fatal level.  Logs and then calls `log.Exit(1)`.
 	Fatal Level = 1
 	// Error level. Used for errors that should definitely be noted.
 	Error Level= 2
@@ -64,7 +64,7 @@ type (
 
 	// Initializer the interface that wrap log init function.
 	Initializer interface {
-		// InitialLog creates a logger object internally and
+		// InitialLog creates a log object internally and
 		// returns a log rotator object for optional extra configuration.
 		InitialLog(level Level) Rotator
 	}
