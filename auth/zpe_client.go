@@ -91,8 +91,7 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 		ztsKey, err := new(zmssvctoken.YBase64).DecodeString(pubKey)
 		isValid, err := rToken.Validate(string(ztsKey), config.ZpeConfig.Properties.AllowedOffset, false)
 		if err != nil {
-			return nil, common.Errorf("verification of data with zts key "+
-				"having id:\"%#v\" failed, Error: %s", req.Token, err.Error())
+			return nil, common.Errorf("validation failed, error: %s", err.Error())
 		}
 		roleToken = rToken
 

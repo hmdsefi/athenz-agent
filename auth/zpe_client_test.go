@@ -48,6 +48,56 @@ const (
 
 var testTempFolder string
 
+
+func signPolicy(domainSignedPolicyData *zts.DomainSignedPolicyData,
+	zmsPrivateKey string, ztsPrivateKey string) error{
+	zmsData, err := ioutil.ReadFile(zmsPrivateKey)
+	if err != nil {
+		return common.Errorf("unable to open zms private key file, error: %s", err.Error())
+	}
+
+	signer, err := zmssvctoken.NewSigner(zmsData)
+	if err != nil {
+		return err
+	}
+	policyData, err := zpuUtil.ToCanonicalString(domainSignedPolicyData.SignedPolicyData.PolicyData)
+	if err != nil {
+		return err
+	}
+	signature, err := signer.Sign(policyData)
+	if err != nil {
+		return err
+	}
+
+	domainSignedPolicyData.SignedPolicyData.ZmsSignature = signature
+	domainSignedPolicyData.SignedPolicyData.ZmsKeyId = "0"
+
+	ztsData, err := ioutil.ReadFile(ztsPrivateKey)
+	if err != nil {
+		return common.Errorf("unable to open zts private key file, error: %s", err.Error())
+	}
+
+	signer, err = zmssvctoken.NewSigner(ztsData)
+	if err != nil {
+		return err
+	}
+
+	policyData, err = zpuUtil.ToCanonicalString(domainSignedPolicyData.SignedPolicyData)
+	if err != nil {
+		return err
+	}
+
+	signature, err = signer.Sign(policyData)
+	if err != nil {
+		return err
+	}
+
+	domainSignedPolicyData.Signature = signature
+	domainSignedPolicyData.KeyId = "0"
+
+	return nil
+}
+
 func preparePolicyFiles(expiry time.Time) error {
 
 	log.NewLogrusInitializer().InitialLog(log.Info)
@@ -61,17 +111,20 @@ func preparePolicyFiles(expiry time.Time) error {
 	}
 
 	readFile, err := os.OpenFile(policyFile, os.O_RDONLY, 0444)
-	defer func() {
-		_ = readFile.Close()
-	}()
 	if err != nil {
-		return common.Errorf("cannot open file: %#v , Error: %s", policyFile, err.Error())
+		return common.Errorf("cannot open file: %s , error: %s", policyFile, err.Error())
 	}
+	defer func() {
+		cErr := readFile.Close()
+		if cErr != nil {
+			common.Fatal(err.Error())
+		}
+	}()
 
 	var domainSignedPolicyData *zts.DomainSignedPolicyData
-	err = json.NewDecoder(readFile).Decode(&domainSignedPolicyData)
-	if err != nil {
-		return common.Errorf("unable to decode policy file: %#v, Error: %s", policyFile, err.Error())
+
+	if err := json.NewDecoder(readFile).Decode(&domainSignedPolicyData); err != nil {
+		return common.Errorf("unable to decode policy file: %s, error: %s", policyFile, err.Error())
 	}
 
 	if expiry.UnixNano() > 0 {
@@ -79,27 +132,9 @@ func preparePolicyFiles(expiry time.Time) error {
 		domainSignedPolicyData.SignedPolicyData.Expires = rdl.Timestamp{Time: expiry}
 	}
 
-	zmsData, err := ioutil.ReadFile(zmsPrivateKey0)
-	if err != nil {
-		return common.Error("cannot open zms private key file")
+	if err := signPolicy(domainSignedPolicyData,zmsPrivateKey0, ztsPrivateKey0); err !=nil {
+		common.Fatal(err.Error())
 	}
-
-	signer, _ := zmssvctoken.NewSigner(zmsData)
-	policyData, _ := zpuUtil.ToCanonicalString(domainSignedPolicyData.SignedPolicyData.PolicyData)
-	signature, _ := signer.Sign(policyData)
-	domainSignedPolicyData.SignedPolicyData.ZmsSignature = signature
-	domainSignedPolicyData.SignedPolicyData.ZmsKeyId = "0"
-
-	ztsData, err := ioutil.ReadFile(ztsPrivateKey0)
-	if err != nil {
-		return common.Error("cannot open zts private key file")
-	}
-
-	signer, _ = zmssvctoken.NewSigner(ztsData)
-	policyData, _ = zpuUtil.ToCanonicalString(domainSignedPolicyData.SignedPolicyData)
-	signature, _ = signer.Sign(policyData)
-	domainSignedPolicyData.Signature = signature
-	domainSignedPolicyData.KeyId = "0"
 
 	testTempFolder, err = ioutil.TempDir(tmpDir, policyDirPrefix)
 	if err != nil {
@@ -134,6 +169,12 @@ func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 	a := assert.New(t)
 	err := preparePolicyFiles(time.Time{})
 	a.NoError(err)
+	defer func() {
+		err := common.RemoveAll(testTempFolder)
+		if err != nil {
+			common.Fatal(err.Error())
+		}
+	}()
 
 	files, _ := ioutil.ReadDir(testTempFolder)
 	cache.PolicyDirectory = testTempFolder
@@ -149,8 +190,6 @@ func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
 	a.Equal(status.AccessCheckStatus, int32(9))
-
-	_ = os.RemoveAll(testTempFolder)
 }
 
 func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
@@ -194,7 +233,7 @@ func TestPermissionService_CheckAccessWithTokenDeny(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(1))
+	a.Equal(int32(1), status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -325,14 +364,14 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow1(t *testing.T) {
 
 	signedToken := createRoleToken("full_regex", "angler")
 
-	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:oretech",
+	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:coretech",
 		Token: signedToken}
 
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(int32(0), status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -348,7 +387,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow2(t *testing.T) {
 
 	signedToken := createRoleToken("full_regex", "angler")
 
-	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:orecommit",
+	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:corecommit",
 		Token: signedToken}
 
 	tst := PermissionService{}
@@ -371,14 +410,14 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow3(t *testing.T) {
 
 	signedToken := createRoleToken("full_regex", "angler")
 
-	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:orec",
+	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:borec",
 		Token: signedToken}
 
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(int32(0), status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -394,14 +433,14 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow4(t *testing.T) {
 
 	signedToken := createRoleToken("full_regex", "angler")
 
-	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:ored",
+	request := &v1.AccessCheckRequest{Access: "full_regex", Resource: "angler:cored",
 		Token: signedToken}
 
 	tst := PermissionService{}
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(int32(0), status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }

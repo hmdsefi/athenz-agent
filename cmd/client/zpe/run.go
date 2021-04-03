@@ -32,8 +32,9 @@ func Run() {
 
 	val, err := client.CheckAccessWithClient(token, access, resource, host, port)
 	if err != nil {
-		logger.Fatalf("CheckAccessWithClient: error when calling `CheckAccessWithToken`, error: %s", err.Error())
+		logger.Fatalf("error when calling agent's client, error: %s", err.Error())
 	}
 
-	fmt.Printf("Response from server: %d", val)
+	logger.Info(fmt.Sprintf("resource: %s, access: %s, access_status: %d", resource, access, val))
+	fmt.Printf("Response from server: %d\n", val)
 }

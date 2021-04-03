@@ -88,8 +88,8 @@ func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allo
 	// future we'll allow the configured offset between servers.
 	if roleToken.GenerationTime != 0 &&
 		(roleToken.GenerationTime/int64(time.Second))-allowedOffset > now {
-		return false, common.Errorf("token has future generatedTime, generated time: %v, "+
-			"now: %v, allowed offset: %d", roleToken.GenerationTime, time.Unix(0, now), allowedOffset)
+		return false, common.Errorf("token has future generatedTime, generated time: %+v, "+
+			"now: %+v, allowed offset: %d", roleToken.GenerationTime, time.Unix(0, now), allowedOffset)
 	}
 
 	// make sure we don't have unlimited tokens unless we have
@@ -98,13 +98,13 @@ func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allo
 	if roleToken.ExpiryTime != 0 || !allowNoExpiry {
 		expiry := roleToken.ExpiryTime / int64(time.Second)
 		if expiry < now {
-			return false, common.Errorf("token has expired, expiry time: %v, now: %v",
+			return false, common.Errorf("token has expired, expiry time: %+v, now: %+v",
 				roleToken.ExpiryTime, time.Unix(0, now))
 		}
 
 		if expiry > now+(roleToken.AthenzTokenMaxExpiry*24*60*60)+allowedOffset {
-			return false, common.Errorf("token expires too far in the future, expiryTime: %v"+
-				", current time: %v, max expiry: %d days, allowed offset: %d", roleToken.ExpiryTime,
+			return false, common.Errorf("token expires too far in the future, expiryTime: %+v"+
+				", current time: %+v, max expiry: %d days, allowed offset: %d", roleToken.ExpiryTime,
 				time.Unix(0, now), roleToken.AthenzTokenMaxExpiry, allowedOffset)
 		}
 
@@ -163,7 +163,7 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 			roleToken.Signature = inner[1]
 		case tagDomainCompleteRoleSet:
 			if i, err := strconv.Atoi(inner[1]); err != nil {
-				return nil, common.Errorf("unable to extract roletoken, error: %v", err)
+				return nil, common.Errorf("unable to extract roletoken, error: %s", err.Error())
 			} else if i == 1 {
 				roleToken.DomainCompleteRoleSet = true
 			}

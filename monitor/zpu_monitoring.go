@@ -27,7 +27,7 @@ func StartDownloader(downloadChan chan<- string) {
 	for {
 		err := downloader.DownloadPolicies(config.ZpuConfig.Properties)
 		if err != nil {
-			downloadChan <- fmt.Sprintf("Policy updator failed, %v", err)
+			downloadChan <- fmt.Sprintf("Policy updator failed, %s", err.Error())
 		}
 		<-time.After(time.Duration(config.ZpeConfig.Properties.ZpuDownloadInterval) * time.Second)
 	}

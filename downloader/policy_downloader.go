@@ -17,16 +17,21 @@
 package downloader
 
 import (
-	"fmt"
 	"github.com/yahoo/athenz/utils/zpe-updater"
-	"log"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
+	)
+
+var (
+	logger = log.GetLogger(common.GolangFileName())
 )
 
 func DownloadPolicies(zpuConfig *zpu.ZpuConfiguration) error {
 	err := zpu.PolicyUpdater(zpuConfig)
 	if err != nil {
-		return fmt.Errorf("DownloadPolicies: policy updator failed, %v", err)
+		logger.Error(err.Error())
+		return common.Errorf("DownloadPolicies: policy updater failed, %s", err.Error())
 	}
-	log.Println("DownloadPolicies: policy updater finished successfully")
+	logger.Info("DownloadPolicies: policy updater finished successfully")
 	return nil
 }

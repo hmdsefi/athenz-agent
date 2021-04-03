@@ -22,14 +22,19 @@ package server
 
 import (
 	"context"
+	"gitlab.com/trialblaze/athenz-agent/common"
+	"gitlab.com/trialblaze/athenz-agent/common/log"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
 
 	ac "gitlab.com/trialblaze/grpc-go/pkg/api/common/command/v1"
+)
+
+var (
+	logger = log.GetLogger(common.GolangFileName())
 )
 
 func RunServer(ctx context.Context, ps ac.PermissionServer, port string, waitGrp *sync.WaitGroup) error {
@@ -50,17 +55,17 @@ func RunServer(ctx context.Context, ps ac.PermissionServer, port string, waitGrp
 		select {
 		case <-c:
 			// sig is a ^C, handle it
-			log.Println("shutting down 'athenz-agent' gRPC server...")
+			logger.Info("shutting down 'athenz-agent' gRPC server...")
 			server.GracefulStop()
 			waitGrp.Done()
 		case <-ctx.Done():
-			log.Println("shutting down 'athenz-agent' gRPC server...")
+			logger.Info("shutting down 'athenz-agent' gRPC server...")
 			server.GracefulStop()
 			waitGrp.Done()
 		}
 	}()
 
 	// start gRPC server
-	log.Printf("'athenz-agent' gRPC server listenting on port: %s", port)
+	logger.Info("'athenz-agent' gRPC server listening on port: "+ port)
 	return server.Serve(listen)
 }

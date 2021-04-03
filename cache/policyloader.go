@@ -43,27 +43,26 @@ import (
 )
 
 var (
-	logger = log.GetLogger(common.GolangFileName())
-	fileStatusMap = make(map[string]*zpeFileStatus)
- lastTokenCleanup = common.CurrentTimeMillis()
- PolicyDirectory string
+	logger           = log.GetLogger(common.GolangFileName())
+	fileStatusMap    = make(map[string]*zpeFileStatus)
+	lastTokenCleanup = common.CurrentTimeMillis()
+	PolicyDirectory  string
 
-// key is the domain name, value is a map keyed by role name with list of assertions
- DomainStandardRoleAllowMap = make(map[string]*RoleMap)
+	// key is the domain name, value is a map keyed by role name with list of assertions
+	DomainStandardRoleAllowMap = make(map[string]*RoleMap)
 
-// wild card role map, keys and values same as domRoleMap above
- DomainWildcardRoleAllowMap = make(map[string]*RoleMap)
+	// wild card role map, keys and values same as domRoleMap above
+	DomainWildcardRoleAllowMap = make(map[string]*RoleMap)
 
-// key is the domain name, value is a map keyed by role name with list of assertions
- DomainStandardRoleDenyMap = make(map[string]*RoleMap)
+	// key is the domain name, value is a map keyed by role name with list of assertions
+	DomainStandardRoleDenyMap = make(map[string]*RoleMap)
 
-// wild card role map, keys and values same as domRoleMap above
- DomainWildcardRoleDenyMap = make(map[string]*RoleMap)
+	// wild card role map, keys and values same as domRoleMap above
+	DomainWildcardRoleDenyMap = make(map[string]*RoleMap)
 
-// cache of active Role Tokens
- RoleTokenCacheMap = make(map[string]*token.RoleToken)
+	// cache of active Role Tokens
+	RoleTokenCacheMap = make(map[string]*token.RoleToken)
 )
-
 
 type zpeFileStatus struct {
 	fileName         string
@@ -89,8 +88,11 @@ func getMatchObject(value string) matcher.ZpeMatch {
 		} else if anyCharMatch == len(value)-1 && singleCharMatch == -1 {
 			return matcher.ZpeMatchStartsWith{Prefix: value[:anyCharMatch]}
 		} else {
-			patter, _ := regexp.Compile(value)
-			return matcher.ZpeMatchRegex{Pattern: patter}
+			regexMatcher, err := matcher.NewZpeMatchRegex(value)
+			if err != nil {
+				logger.Error(fmt.Sprintf("unable to create pattern for '%s', error: %s", value, err.Error()))
+			}
+			return regexMatcher
 		}
 	}
 }
@@ -146,12 +148,12 @@ func loadFile(file os.FileInfo) error {
 	path := PolicyDirectory + "/" + file.Name()
 	fileInfo, err := os.Stat(path)
 	if err != nil {
-		return fmt.Errorf("loadFile: unable to load file info: %v, Error: %v", path, err)
+		return common.Errorf("unable to load file info: %s, error: %s", path, err)
 	}
 
 	readFile, err := os.OpenFile(path, os.O_RDONLY, 0444)
 	if err != nil {
-		return fmt.Errorf("loadFile: Cannot open file: %v , Error: %v", path, err)
+		return common.Errorf("unable to open file: %s , error: %s", path, err)
 	}
 	defer func() {
 		err := readFile.Close()
@@ -163,7 +165,7 @@ func loadFile(file os.FileInfo) error {
 	var domainSignedPolicyData *zts.DomainSignedPolicyData
 	err = json.NewDecoder(readFile).Decode(&domainSignedPolicyData)
 	if err != nil {
-		return fmt.Errorf("loadFile: Unable to decode policy file: %v, Error: %v", path, err)
+		return common.Errorf("unable to decode policy file: %s, error: %s", path, err.Error())
 	}
 
 	if domainSignedPolicyData == nil {
@@ -172,7 +174,7 @@ func loadFile(file os.FileInfo) error {
 		if fileStatus != nil {
 			fileStatus.isValidPolFile = false
 		}
-		return fmt.Errorf("loadFile: Unable to decode policy file: %v, Error: %v", path, err)
+		return common.Errorf("unable to decode policy file: %s", path)
 	}
 
 	// first let's verify the ZTS signature for our policy file
@@ -181,18 +183,20 @@ func loadFile(file os.FileInfo) error {
 	verified := false
 	input, err := zpuUtil.ToCanonicalString(signedPolicyData)
 	if err != nil {
-		return fmt.Errorf("loadFile: Unable to convert to string, Error: %v", err)
+		return common.Errorf("unable to convert to string, error: %s", err.Error())
 	}
 
 	pubKey := config.KeyStore.GetZtsPublicKey(domainSignedPolicyData.KeyId)
 	ztsKey, err := new(zmssvctoken.YBase64).DecodeString(pubKey)
 	if err != nil {
-		return fmt.Errorf("loadFile: verification of data with zts key having id:\"%v\" failed, Error :%v",
-			domainSignedPolicyData.KeyId, err)
+		return common.Errorf("verification of data with zts key having id: '%s' failed, error: %s",
+			domainSignedPolicyData.KeyId, err.Error())
 	}
 	err = common.Verify(input, domainSignedPolicyData.Signature, string(ztsKey))
 	if err == nil {
 		verified = true
+	} else {
+		logger.Error("invalid policy, error: " + err.Error())
 	}
 
 	var policyData *zts.PolicyData
@@ -201,12 +205,12 @@ func loadFile(file os.FileInfo) error {
 
 		inputPolicy, err := zpuUtil.ToCanonicalString(policyData)
 		if err != nil {
-			return fmt.Errorf("loadFile: Unable to convert to string, Error: %v", err)
+			return common.Errorf("unable to convert to string, error: %s", err)
 		}
 
 		zmsKey, err := new(zmssvctoken.YBase64).DecodeString(config.KeyStore.GetZmsPublicKey(signedPolicyData.ZmsKeyId))
 		if err != nil {
-			return fmt.Errorf("loadFile: verification of data with zms key having id:\"%v\" failed, Error :%v",
+			return common.Errorf("verification of data with zms key having id:'%s' failed, error: %s",
 				signedPolicyData.ZmsKeyId, err)
 		}
 
@@ -222,7 +226,7 @@ func loadFile(file os.FileInfo) error {
 		if fileStatus != nil {
 			fileStatus.isValidPolFile = false
 		}
-		return fmt.Errorf("loadFile: Policy file is invalid: %v", path)
+		return common.Errorf("policy file is invalid: %s", path)
 	}
 
 	domainName := string(policyData.Domain)

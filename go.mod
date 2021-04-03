@@ -8,10 +8,10 @@ require (
 	github.com/fsnotify/fsnotify v1.4.7
 	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
-	github.com/pkg/errors v0.8.1
+	github.com/oriser/regroup v0.0.0-20201024192559-010c434ff8f3
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.3.0
+	github.com/stretchr/testify v1.6.1
 	github.com/urfave/cli v1.22.5
 	github.com/xhit/go-str2duration/v2 v2.0.0
 	github.com/yahoo/athenz v1.8.20

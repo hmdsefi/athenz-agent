@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	"log"
 	"os"
 	"testing"
 )
@@ -43,7 +42,7 @@ func TestVerifierPositiveTest(t *testing.T) {
 	signature := "XJnQ4t33D4yr7NtUjLaWhXULFr76z.z0p3QV4uCkA5KR9L4liVRmICYwVmnXxvHAlImKlKLv7sbIHNsjBfGfCw--"
 	key, err := new(zmssvctoken.YBase64).DecodeString(publicKey)
 	if err != nil {
-		log.Fatalf("Failed to decode key to Verify data , Error:%v", err)
+		Fatalf("Failed to decode key to Verify data , error: %s", err.Error())
 	}
 	err = Verify(input, signature, string(key))
 	a.Nil(err, "Verifier failed for valid data")

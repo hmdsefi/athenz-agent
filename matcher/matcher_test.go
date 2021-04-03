@@ -21,17 +21,24 @@ import (
 	"testing"
 )
 
-func TestPatternFromGlob(t *testing.T) {
+func TestNormalizePattern(t *testing.T) {
 	a := assert.New(t)
 
-	a.Equal(PatternFromGlob("abc"), "^abc$")
-	a.Equal(PatternFromGlob("abc*"), "^abc.*$")
-	a.Equal(PatternFromGlob("abc?"), "^abc.$")
-	a.Equal(PatternFromGlob("*abc?"), "^.*abc.$")
-	a.Equal(PatternFromGlob("abc.abc:*"), "^abc\\.abc:.*$")
-	a.Equal(PatternFromGlob("ab[a-c]c"), "^ab\\[a-c]c$")
-	a.Equal(PatternFromGlob("ab*.()^$c"), "^ab.*\\.\\(\\)\\^\\$c$")
-	a.Equal(PatternFromGlob("abc\\test\\"), "^abc\\\\test\\\\$")
-	a.Equal(PatternFromGlob("ab{|c+"), "^ab\\{\\|c\\+$")
-	a.Equal(PatternFromGlob("^$[()\\+{.*?|"), "^\\^\\$\\[\\(\\)\\\\\\+\\{\\..*.\\|$")
+	a.Equal("^abc$", normalizePattern("abc"))
+	a.Equal("^abc.*$", normalizePattern("abc*"))
+	a.Equal("^abc.$", normalizePattern("abc?"))
+	a.Equal("^.*abc.$", normalizePattern("*abc?"))
+	a.Equal("^.abc(c|d)$", normalizePattern("?abc(c|d)"))
+	a.Equal("^abc\\.abc:.*$", normalizePattern("abc.abc:*"))
+	a.Equal("^ab[a-c]c$", normalizePattern("ab[a-c]c"))
+	a.Equal("^abc\\\\test\\\\$", normalizePattern("abc\\test\\"))
+}
+
+func TestNormalizePattern_regex(t *testing.T) {
+	a := assert.New(t)
+
+	a.Regexp(normalizePattern("?bcd(e|f)"), "abcde")
+	a.NotRegexp(normalizePattern("?bcd(e|f)"), "bcde")
+	a.Regexp(normalizePattern("*"), "abc12312")
+	a.Regexp(normalizePattern("abc*"), "abcde")
 }

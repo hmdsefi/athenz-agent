@@ -136,17 +136,17 @@
                         {
                             "action": "full_regex",
                             "role": "angler:role.full_regex",
-                            "resource": "angler:ore?(tech|commit)"
+                            "resource": "angler:?ore(tech|commit)"
                         },
                         {
                             "action": "full_regex",
                             "role": "angler:role.full_regex",
-                            "resource": "angler:ore?[a-c]"
+                            "resource": "angler:?ore[a-c]"
                         },
                         {
                             "action": "full_regex",
                             "role": "angler:role.full_regex",
-                            "resource": "angler:ore?[def]"
+                            "resource": "angler:?ore[def]"
                         }
                     ],
                     "modified": "2014-05-24T00:35:11.387Z",

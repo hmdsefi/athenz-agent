@@ -17,8 +17,8 @@
 package config
 
 import (
-	"fmt"
 	"github.com/yahoo/athenz/utils/zpe-updater"
+	"gitlab.com/trialblaze/athenz-agent/common"
 )
 
 const (
@@ -51,7 +51,7 @@ func LoadZpuConfig(zpuConfig *ZpuConfiguration, athenzConfPath, zpuConfPath stri
 	// load ZPU configuration using Yahoo zpe-updater
 	zpuConfig.Properties, err = zpu.NewZpuConfiguration(".", athenzConfPath, zpuConfPath)
 	if err != nil {
-		return fmt.Errorf("LoadZpuConfig: unable to get zpu configuration, Error: %v", err)
+		return common.Errorf("unable to get zpu configuration, error: %s", err.Error())
 	}
 
 	return nil

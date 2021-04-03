@@ -17,7 +17,6 @@
 package cache
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	"gitlab.com/trialblaze/athenz-agent/common"
 	"gitlab.com/trialblaze/athenz-agent/common/log"
@@ -33,24 +32,15 @@ const (
 	configDirPrefix  = "config"
 	policyDirPrefix  = "policy"
 	polFile          = "test.pol"
-	athenzConfigPath = "testdata/athenz.conf"
-	zpeConfigPath    = "testdata/zpe.conf"
+	athenzConfigPath = "testdata/athenz.json"
+	zpeConfigPath    = "testdata/zpe.toml"
 )
 
 func setup() {
 	log.NewLogrusInitializer().InitialLog(log.Info)
-
-	if err := config.LoadGlobalZpeConfig(zpeConfigPath); err != nil {
-		common.Fatalf("unable to load config, %s: ", err)
-	}
-
-	if err := config.LoadGlobalAthenzConfig(athenzConfigPath); err != nil {
-		common.Fatalf("unable to load config, %s: ", err)
-	}
 }
 
 func TestGetMatchObject(t *testing.T) {
-
 	a := assert.New(t)
 
 	matchObject := getMatchObject("*")
@@ -86,12 +76,16 @@ func TestLoadDBNull(t *testing.T) {
 }
 
 func TestLoadDB(t *testing.T) {
-
 	a := assert.New(t)
 
 	policyDir, err := ioutil.TempDir("./", policyDirPrefix)
 	a.NoError(err)
-	defer common.RemoveAll(policyDir)
+	defer func() {
+		err := common.RemoveAll(policyDir)
+		if err != nil {
+			common.Fatal(err.Error())
+		}
+	}()
 	PolicyDirectory = policyDir
 
 	policyPath := policyDir + "/" + polFile
@@ -111,13 +105,14 @@ func TestLoadDB(t *testing.T) {
 	// use athenz config file to verify input and signature
 	// and then cache the policies in memory
 	configDir, err := ioutil.TempDir("./", configDirPrefix)
-	a.NoError(err)
+	a.Nil(err)
 	defer common.RemoveAll(configDir)
-	//configPath := configDir + "/" + testAthenzConf
-	//err = common.CreateFile(configPath, `{"zmsUrl":"https://dev.zms.athenzcompany.com:4443/","ztsUrl":"https://dev.zts.athenzcompany.com:4443/","ztsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlHZk1BMEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCZ1FETGlLY1hjUDlrMWRJcGU4bm1OS3pBaWpGcApuY0VWbEFveS8xcHordE5ETjExcDQ0MTJEREhXejhFSUNiVkE0RE16Wm1ta09URFdlUDBQSWdnNTg0RlF1SGpsCmsyOWU4VjJXT3pqQWZybGlad0dKbm1mdlBhb3FOQkNhZDI3cWFubm1MOVU3cTcvSEdRWmpMeGdoaXhGa0FtczEKaHFlbnlkb2JSVkhheHV3cDB3SURBUUFCCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}],"zmsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}]}`)
-	//a.NoError(err)
-	//conf, _ := config.LoadAthenzConfig(configPath)
-	//config.KeyStore = conf
+	configPath := configDir + "/athenz.json"
+	err = common.CreateFile(configPath, `{"zmsUrl":"https://dev.zms.athenzcompany.com:4443/","ztsUrl":"https://dev.zts.athenzcompany.com:4443/","ztsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key": "LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUlHZk1BMEdDU3FHU0liM0RRRUJBUVVBQTRHTkFEQ0JpUUtCZ1FETGlLY1hjUDlrMWRJcGU4bm1OS3pBaWpGcApuY0VWbEFveS8xcHordE5ETjExcDQ0MTJEREhXejhFSUNiVkE0RE16Wm1ta09URFdlUDBQSWdnNTg0RlF1SGpsCmsyOWU4VjJXT3pqQWZybGlad0dKbm1mdlBhb3FOQkNhZDI3cWFubm1MOVU3cTcvSEdRWmpMeGdoaXhGa0FtczEKaHFlbnlkb2JSVkhheHV3cDB3SURBUUFCCi0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}],"zmsPublicKeys":[{"id":"0","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"},{"id":"1","key":"LS0tLS1CRUdJTiBQVUJMSUMgS0VZLS0tLS0KTUZ3d0RRWUpLb1pJaHZjTkFRRUJCUUFEU3dBd1NBSkJBTHpmU09UUUpmRW0xZW00TDNza3lOVlEvYngwTU9UcQphK1J3T0gzWmNNS3lvR3hPSm85QXllUmE2RlhNbXZKSkdZczVQMzRZc3pGcG5qMnVBYmkyNG5FQ0F3RUFBUT09Ci0tLS0tRU5EIFBVQkxJQyBLRVktLS0tLQo-"}]}`)
+	a.Nil(err)
+	if err := config.LoadGlobalAthenzConfig(configPath); err != nil {
+		common.Fatalf("unable to load config, %s: ", err)
+	}
 
 	files, _ = common.LoadFileStatus(policyDir)
 	LoadDB(files)
@@ -128,19 +123,20 @@ func TestLoadDB(t *testing.T) {
 func TestCleanupRoleTokenCache(t *testing.T) {
 	a := assert.New(t)
 
-	var zpeConfig *config.ZpeConfiguration
-
 	dir, err := ioutil.TempDir("./", configDirPrefix)
 	a.NoError(err)
-	defer common.RemoveAll(dir)
+	defer func() {
+		err := common.RemoveAll(dir)
+		if err != nil {
+			common.Fatal(err.Error())
+		}
+	}()
 
-	configPath := dir + "/" + testZpeConfigFile
+	configPath := dir + "/zpe.json"
 	err = common.CreateFile(configPath, `{"policy_files_dir": "./resource/policy","cleanup_token_interval":10,"athenz_config_dir":"./resource"}`)
 	a.NoError(err)
-	zpeConfig, err = config.LoadZpeConfig(configPath)
+	err = config.LoadGlobalZpeConfig(configPath)
 	a.NoError(err)
-	a.NotNil(zpeConfig)
-	config.ZConfig = zpeConfig
 
 	lastTokenCleanup = common.CurrentTimeMillis()
 	oldLTC := lastTokenCleanup

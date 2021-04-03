@@ -17,10 +17,8 @@
 package config
 
 import (
-	"fmt"
 	"gitlab.com/trialblaze/athenz-agent/common"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 
@@ -37,13 +35,13 @@ func CreateFile(fileName, content string) error {
 	if common.Exists(fileName) {
 		err := os.Remove(fileName)
 		if err != nil {
-			return fmt.Errorf("unable to remove file: %v, Error: %v", fileName, err)
+			return common.Errorf("unable to remove file: %s, error: %s", fileName, err.Error())
 		}
 	}
 
 	err := ioutil.WriteFile(fileName, []byte(content), 0755)
 	if err != nil {
-		return fmt.Errorf("unable to write file: %v, Error: %v", fileName, err)
+		return common.Errorf("unable to write file: %s, error: %s", fileName, err.Error())
 	}
 
 	return nil
@@ -52,7 +50,7 @@ func CreateFile(fileName, content string) error {
 func RemoveAll(path string) {
 	err := os.RemoveAll(path)
 	if err != nil {
-		log.Println(err)
+		common.Fatalf(err.Error())
 	}
 }
 

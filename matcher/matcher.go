@@ -67,21 +67,27 @@ func (zmr ZpeMatchRegex) Match(value string) bool {
 	return zmr.Pattern.MatchString(value)
 }
 
+func NewZpeMatchRegex(in string) (ZpeMatch, error) {
+	patter, err := regexp.Compile(normalizePattern(in))
+	if err != nil {
+		return nil, err
+	}
+
+	return ZpeMatchRegex{Pattern: patter}, nil
+}
+
 func isRegexMetaCharacter(regexChar string) bool {
 	if regexChar == "^" || regexChar == "$" ||
-		regexChar == "." || regexChar == "|" ||
-		regexChar == "[" || regexChar == "+" ||
-		regexChar == "(" || regexChar == ")" ||
-		regexChar == "{" || regexChar == "\\" {
+		regexChar == "." || regexChar == "\\" {
 		return true
 	}
 	return false
 }
 
-func PatternFromGlob(glob string) string {
+func normalizePattern(in string) string {
 	var buffer bytes.Buffer
 	buffer.WriteString("^")
-	for _, char := range glob {
+	for _, char := range in {
 		strChar := string(char)
 		if strChar == "*" {
 			buffer.WriteString(".*")

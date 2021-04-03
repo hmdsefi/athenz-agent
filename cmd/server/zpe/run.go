@@ -76,7 +76,7 @@ func Run() {
 	go func() {
 		if err := server.RunServer(ctx, permissionService, config.AgentConfig.Properties.Server.Port, &waitGrp);
 		err != nil {
-			serverStatusChan <- fmt.Sprintf("Main>startGRPCServer: gRPC server failed to start, error: %s", err.Error())
+			serverStatusChan <- fmt.Sprintf("%s> gRPC server failed to start, error: %s", common.FuncName(),err.Error())
 		}
 	}()
 

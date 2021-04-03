@@ -83,8 +83,8 @@ type (
 	athenzProperties struct {
 		ZtsUrl        string
 		ZmsUrl        string
-		ZtsPublicKeys []PublicKeys `mapstructure:"zts_public_keys"`
-		ZmsPublicKeys []PublicKeys`mapstructure:"zms_public_keys"`
+		ZtsPublicKeys []PublicKeys `mapstructure:"ztsPublicKeys"`
+		ZmsPublicKeys []PublicKeys`mapstructure:"zmsPublicKeys"`
 	}
 )
 

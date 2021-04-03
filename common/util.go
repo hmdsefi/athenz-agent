@@ -21,7 +21,6 @@ import (
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"github.com/yahoo/athenz/utils/zpe-updater/util"
 	"io/ioutil"
-	"log"
 	"os"
 	"runtime"
 	"strings"
@@ -84,23 +83,24 @@ func CreateFile(fileName, content string) error {
 	if util.Exists(fileName) {
 		err := os.Remove(fileName)
 		if err != nil {
-			return Errorf("unable to remove file: %v, Error: %s", fileName, err.Error())
+			return Errorf("unable to remove file: %s, error: %s", fileName, err.Error())
 		}
 	}
 
 	err := ioutil.WriteFile(fileName, []byte(content), 0755)
 	if err != nil {
-		return Errorf("unable to write file: %v, Error: %s", fileName, err.Error())
+		return Errorf("unable to write file: %s, error: %s", fileName, err.Error())
 	}
 
 	return nil
 }
 
-func RemoveAll(path string) {
+func RemoveAll(path string) error {
 	err := os.RemoveAll(path)
 	if err != nil {
-		log.Println(err)
+		return err
 	}
+	return nil
 }
 
 // CreateMetricDirectory makes new directory for metric file, if it doesn't exist
