@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -113,7 +112,7 @@ func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allo
 	err := common.Verify(roleToken.UnsignedToken, roleToken.Signature, publicKey)
 	if err != nil {
 		logger.Error(err.Error())
-		return false, err
+		return false, nil
 	}
 	return true, nil
 }

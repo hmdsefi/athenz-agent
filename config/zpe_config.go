@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -28,8 +27,8 @@ import (
 )
 
 var (
-	KeyStore  = &AthenzConfiguration{}
-	ZpeConfig = &ZpeConfiguration{}
+	KeyStore  = newAthenzConfiguration()
+	ZpeConfig = newZpeConfiguration()
 )
 
 type (
@@ -44,7 +43,7 @@ type (
 	}
 
 	zpeProperties struct {
-		PolicyFilesDir       string
+		PolicyFilesDir       string `mapstructure:"policy_files_dir"`
 		// in seconds format
 		CleanupTokenInterval int64  `mapstructure:"cleanup_token_interval"`
 		AthenzConfigDir      string `mapstructure:"athenz_config_dir"`
@@ -52,7 +51,7 @@ type (
 		// in days format
 		AthenzTokenMaxExpiry int64  `mapstructure:"athenz_token_max_expiry"`
 		// in seconds format
-		AllowedOffset        int64  `mapstructure:"allow_offset"`
+		AllowedOffset        int64  `mapstructure:"allowed_offset"`
 		// TLS cert, this will be used for communicating with ZTS server
 		CertFilePath         string `mapstructure:"cert_file_path"`
 		// Key for the TLS cert, this will be used for communicating with ZTS server
@@ -87,6 +86,12 @@ type (
 		ZmsPublicKeys []PublicKeys`mapstructure:"zmsPublicKeys"`
 	}
 )
+
+// newAthenzConfiguration creates a new instance of AthenzConfiguration with
+// an empty properties to prevent nil pointer exception.
+func newAthenzConfiguration() *AthenzConfiguration {
+	return &AthenzConfiguration{Properties: new(athenzProperties)}
+}
 
 // LoadGlobalAthenzConfig loads config file from input path into the global
 // variable KeyStore.
@@ -127,6 +132,12 @@ func (config AthenzConfiguration) GetZmsPublicKey(id string) string {
 		}
 	}
 	return ""
+}
+
+// newZpeConfiguration creates a new instance of ZpeConfiguration with
+// an empty properties to prevent nil pointer exception.
+func newZpeConfiguration() *ZpeConfiguration {
+	return &ZpeConfiguration{Properties: new(zpeProperties)}
 }
 
 // LoadGlobalZpeConfig loads config file from input path into the global

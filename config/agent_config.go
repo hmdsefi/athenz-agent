@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 3/5/19
@@ -26,7 +25,7 @@ import (
 )
 
 var (
-	AgentConfig = new(AgentConfiguration)
+	AgentConfig = newAgentConfiguration()
 )
 
 type (
@@ -62,6 +61,12 @@ type (
 		RotationTime    string `mapstructure:"rotation_time"`
 	}
 )
+
+// newZpeConfiguration creates a new instance of ZpeConfiguration with
+// an empty properties to prevent nil pointer exception.
+func newAgentConfiguration() *AgentConfiguration {
+	return &AgentConfiguration{Properties: new(agentProperties)}
+}
 
 // LoadGlobalAgentConfig loads config file from input path into the global
 // variable AgentConfig.

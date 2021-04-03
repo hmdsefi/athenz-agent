@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -32,8 +31,6 @@ const (
 	configDirPrefix  = "config"
 	policyDirPrefix  = "policy"
 	polFile          = "test.pol"
-	athenzConfigPath = "testdata/athenz.json"
-	zpeConfigPath    = "testdata/zpe.toml"
 )
 
 func setup() {
@@ -72,10 +69,12 @@ func TestGetMatchObject(t *testing.T) {
 }
 
 func TestLoadDBNull(t *testing.T) {
+	setup()
 	LoadDB(nil)
 }
 
 func TestLoadDB(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	policyDir, err := ioutil.TempDir("./", policyDirPrefix)
@@ -121,6 +120,7 @@ func TestLoadDB(t *testing.T) {
 }
 
 func TestCleanupRoleTokenCache(t *testing.T) {
+	setup()
 	a := assert.New(t)
 
 	dir, err := ioutil.TempDir("./", configDirPrefix)

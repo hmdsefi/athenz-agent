@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -120,14 +119,14 @@ func TestFuncName(t *testing.T) {
 	a:=assert.New(t)
 	funcName := FuncName()
 	fmt.Println(funcName)
-	a.Equal("util.TestFuncName", funcName)
+	a.Equal("common.TestFuncName", funcName)
 }
 
 func TestCallerFuncName(t *testing.T) {
 	a:=assert.New(t)
 	funcName := callerName()
 	fmt.Println(funcName)
-	a.Equal("util.TestCallerFuncName", funcName)
+	a.Equal("common.TestCallerFuncName", funcName)
 }
 
 func callerName() string {

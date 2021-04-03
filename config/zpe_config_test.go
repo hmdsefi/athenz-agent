@@ -4,7 +4,6 @@
  * Use of this source code is governed by an MIT-style
  * license that can be found in the LICENSE file.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -28,7 +27,7 @@ import (
 const (
 	testConfigDirPrefix  = "config"
 	testAthenzConfigFile = "athenz.json"
-	testZpeConfigFile    = "zpe.conf"
+	testZpeConfigFile    = "zpe.json"
 )
 
 func CreateFile(fileName, content string) error {
@@ -119,7 +118,7 @@ func TestReadZpeConfig(t *testing.T) {
 	a.NoError(err)
 	a.Empty(zpeConfig.Properties.CleanupTokenInterval)
 	a.Empty(zpeConfig.Properties.AthenzConfigDir)
-	a.Equal(zpeConfig.Properties.PolicyFilesDir, "./resource/policy")
+	a.Equal("./resource/policy", zpeConfig.Properties.PolicyFilesDir)
 
 	// check if file content is incorrect
 	zpeConfig = new(ZpeConfiguration)
@@ -134,10 +133,10 @@ func TestReadZpeConfig(t *testing.T) {
 	a.NoError(err)
 	err = LoadZpeConfig(zpeConfig, configPath)
 	a.NoError(err)
-	a.Equal(zpeConfig.Properties.CleanupTokenInterval, int64(600))
-	a.Equal(zpeConfig.Properties.PolicyFilesDir, "./resource/policy")
-	a.Equal(zpeConfig.Properties.AthenzConfigDir, "./resource")
+	a.Equal(int64(600), zpeConfig.Properties.CleanupTokenInterval)
+	a.Equal("./resource/policy", zpeConfig.Properties.PolicyFilesDir)
+	a.Equal("./resource", zpeConfig.Properties.AthenzConfigDir)
 	a.True(zpeConfig.Properties.AthenzTokenNoExpiry)
-	a.Equal(zpeConfig.Properties.AthenzTokenMaxExpiry, int64(30))
-	a.Equal(zpeConfig.Properties.AllowedOffset, int64(300))
+	a.Equal(int64(30), zpeConfig.Properties.AthenzTokenMaxExpiry)
+	a.Equal(int64(300), zpeConfig.Properties.AllowedOffset)
 }

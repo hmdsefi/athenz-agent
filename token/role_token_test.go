@@ -1,7 +1,6 @@
 /**
  * Copyright (c) 2019 TRIALBLAZE PTY. LTD. All rights reserved.
  *
- * Created by IntelliJ IDEA.
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
@@ -208,7 +207,7 @@ func TestValidateNoExpiry(t *testing.T) {
 
 func TestValidateTooFarExpiryTimestamp(t *testing.T) {
 	setup()
-
+	invalidPublicKey := "-----BEGIN PUBLIC KEY-----\nsomeInvalidPubKey\n-----END PUBLIC KEY-----"
 	a := assert.New(t)
 	expiration := strconv.FormatInt((common.CurrentTimeMillis()/1000+(30*24*60*60)+10)*int64(time.Second), 10)
 	signedToken := "v=" + svcVersion + ";d=" + svcDomain + ";a=" + salt +
@@ -219,13 +218,12 @@ func TestValidateTooFarExpiryTimestamp(t *testing.T) {
 	a.NotNil(roleToken)
 
 	roleToken.AthenzTokenMaxExpiry = 30
-	isValid, err := roleToken.Validate("someInvalidPubKey", 5, false)
+	isValid, err := roleToken.Validate(invalidPublicKey, 5, false)
 	a.NotNil(err)
 	a.False(isValid)
-	a.True(strings.HasPrefix(err.Error(), "token.Validate> token expires too far in the future"))
+	a.True(strings.HasPrefix(err.Error(), "token.(*RoleToken).Validate-> token expires too far in the future"))
 
-	isValid, err = roleToken.Validate("someInvalidPubKey", 20, false)
-	a.NoError(err)
+	isValid, _ = roleToken.Validate(invalidPublicKey, 20, false)
 	a.False(isValid)
 }
 

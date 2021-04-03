@@ -1,6 +1,0 @@
-policy_files_dir= "./resource/policy"
-cleanup_token_interval= 600
-athenz_config_dir= "./resource"
-athenz_token_no_expiry= true
-athenz_token_max_expiry= 30
-allowed_offset= 300
