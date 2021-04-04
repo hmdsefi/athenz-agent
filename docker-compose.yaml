@@ -1,0 +1,16 @@
+version: '3.7'
+
+services:
+  athenz-agent:
+    build: .
+    container_name: athenz-agent
+    environment:
+      - ZPE_CONFIG_PATH=/app/config/zpe.toml
+      - ATHENZ_CONFIG_PATH=/app/config/athenz.json
+      - ZPU_CONFIG_PATH=/app/config/zpu.json
+      - AGENT_CONFIG_PATH=/app/config/agent.toml
+    volumes:
+      - ./build/config:/app/config
+    ports:
+      - "9091:9091"
+#    command: ['agent', 'start']
