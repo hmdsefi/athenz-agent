@@ -21,22 +21,22 @@ package server
 
 import (
 	"context"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"google.golang.org/grpc"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
 
-	ac "gitlab.com/trialblaze/grpc-go/pkg/api/common/command/v1"
+	ac "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/command/v1"
 )
 
 var (
 	logger = log.GetLogger(common.GolangFileName())
 )
 
-func RunServer(ctx context.Context, ps ac.PermissionServer, port string, waitGrp *sync.WaitGroup) error {
+func RunServer(ctx context.Context, ps ac.AthenzAgentServer, port string, waitGrp *sync.WaitGroup) error {
 	listen, err := net.Listen("tcp", ":"+port)
 	if err != nil {
 		return err
@@ -44,7 +44,7 @@ func RunServer(ctx context.Context, ps ac.PermissionServer, port string, waitGrp
 
 	// register service
 	server := grpc.NewServer()
-	ac.RegisterPermissionServer(server, ps)
+	ac.RegisterAthenzAgentServer(server, ps)
 
 	// graceful shutdown
 	c := make(chan os.Signal, 1)

@@ -19,7 +19,7 @@ package config
 import (
 	"github.com/alecthomas/units"
 	convertor "github.com/xhit/go-str2duration/v2"
-	"gitlab.com/trialblaze/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common"
 	"math/rand"
 	"time"
 )

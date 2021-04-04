@@ -20,19 +20,23 @@ package client
 import (
 	"errors"
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
-	ac "gitlab.com/trialblaze/grpc-go/pkg/api/common/command/v1"
-	msg "gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
+	ac "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/command/v1"
+	msg "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/message/v1"
 )
 
 var (
 	logger = log.GetLogger(common.GolangFileName())
 )
 
+// CheckAccessWithClient connects to a athenz-agent server to check an access to a
+// resource for a token.
+//
+// CheckAccessWithClient is useful to test tokens and other kind of tests.
 func CheckAccessWithClient(token, access, resource, host, serverPort string) (int32, error) {
 
 	var conn *grpc.ClientConn
@@ -45,14 +49,14 @@ func CheckAccessWithClient(token, access, resource, host, serverPort string) (in
 		_ = conn.Close()
 	}()
 
-	c := ac.NewPermissionClient(conn)
+	client := ac.NewAthenzAgentClient(conn)
 
-	response, err := c.CheckAccessWithToken(context.Background(),
+	response, err := client.CheckAccessWithToken(context.Background(),
 		&msg.AccessCheckRequest{Token: token, Access: access, Resource: resource})
 	if err != nil {
 		return -1, errors.New(fmt.Sprintf("%s> error when calling `CheckAccessWithToken`, error: %s",
 			common.FuncName(), err.Error()))
 	}
 
-	return response.AccessCheckStatus, err
+	return int32(response.AccessCheckStatus.Enum().Number()), err
 }

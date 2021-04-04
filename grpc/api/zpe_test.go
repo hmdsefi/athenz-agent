@@ -13,20 +13,20 @@
  *
  */
 
-package auth
+package api
 
 import (
 	"encoding/json"
 	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/hamed-yousefi/athenz-agent/.gen/proto/api/message/v1"
+	"github.com/hamed-yousefi/athenz-agent/cache"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	zpuUtil "github.com/yahoo/athenz/utils/zpe-updater/util"
-	"gitlab.com/trialblaze/athenz-agent/cache"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
-	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"os"
@@ -36,20 +36,19 @@ import (
 )
 
 const (
-	tmpDir          = "testdata"
-	policyDirPrefix = "policy"
-	policyFile      = "testdata/angler.pol"
-	zmsPrivateKey0  = "testdata/zms_private_k0.pem"
-	ztsPrivateKey0  = "testdata/zts_private_k0.pem"
-	athenzConfigPath    = "testdata/athenz.json"
-	zpeConfigPath       = "testdata/zpe.toml"
+	tmpDir           = "testdata"
+	policyDirPrefix  = "policy"
+	policyFile       = "testdata/angler.pol"
+	zmsPrivateKey0   = "testdata/zms_private_k0.pem"
+	ztsPrivateKey0   = "testdata/zts_private_k0.pem"
+	athenzConfigPath = "testdata/athenz.json"
+	zpeConfigPath    = "testdata/zpe.toml"
 )
 
 var testTempFolder string
 
-
 func signPolicy(domainSignedPolicyData *zts.DomainSignedPolicyData,
-	zmsPrivateKey string, ztsPrivateKey string) error{
+	zmsPrivateKey string, ztsPrivateKey string) error {
 	zmsData, err := ioutil.ReadFile(zmsPrivateKey)
 	if err != nil {
 		return common.Errorf("unable to open zms private key file, error: %s", err.Error())
@@ -131,7 +130,7 @@ func preparePolicyFiles(expiry time.Time) error {
 		domainSignedPolicyData.SignedPolicyData.Expires = rdl.Timestamp{Time: expiry}
 	}
 
-	if err := signPolicy(domainSignedPolicyData,zmsPrivateKey0, ztsPrivateKey0); err !=nil {
+	if err := signPolicy(domainSignedPolicyData, zmsPrivateKey0, ztsPrivateKey0); err != nil {
 		common.Fatal(err.Error())
 	}
 
@@ -188,7 +187,7 @@ func TestPermissionService_CheckAccessWithTokenPolicyFileExpired(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(9))
+	a.Equal(v1.AccessStatus_DENY_DOMAIN_EXPIRED, status.AccessCheckStatus)
 }
 
 func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
@@ -209,7 +208,7 @@ func TestPermissionService_CheckAccessWithTokenAllow(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -232,7 +231,7 @@ func TestPermissionService_CheckAccessWithTokenDeny(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(int32(1), status.AccessCheckStatus)
+	a.Equal(v1.AccessStatus_DENY, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -255,7 +254,7 @@ func TestPermissionService_CheckAccessWithTokenStartWith(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -278,7 +277,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardDeny(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(1))
+	a.Equal(v1.AccessStatus_DENY, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -301,7 +300,7 @@ func TestPermissionService_CheckAccessWithTokenWildcardAllow(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -324,7 +323,7 @@ func TestPermissionService_CheckAccessWithTokenMatchAllAllow(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -347,7 +346,7 @@ func TestPermissionService_CheckAccessWithTokenMatchRegexAllow(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -370,7 +369,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow1(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(int32(0), status.AccessCheckStatus)
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -393,7 +392,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow2(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(status.AccessCheckStatus, int32(0))
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -416,7 +415,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow3(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(int32(0), status.AccessCheckStatus)
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }
@@ -439,7 +438,7 @@ func TestPermissionService_CheckAccessWithTokenFullRegexAllow4(t *testing.T) {
 	ctx := context.Background()
 	status, err := tst.CheckAccessWithToken(ctx, request)
 	a.NoError(err)
-	a.Equal(int32(0), status.AccessCheckStatus)
+	a.Equal(v1.AccessStatus_ALLOW, status.AccessCheckStatus)
 
 	_ = os.RemoveAll(testTempFolder)
 }

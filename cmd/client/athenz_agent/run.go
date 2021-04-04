@@ -12,13 +12,13 @@
  *
  */
 
-package zpe
+package athenz_agent
 
 import (
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
-	"gitlab.com/trialblaze/athenz-agent/grpc/client"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/grpc/client"
 )
 
 func run() {

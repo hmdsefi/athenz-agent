@@ -12,7 +12,7 @@
  *
  */
 
-package zpe
+package athenz_agent
 
 import (
 	"github.com/urfave/cli"

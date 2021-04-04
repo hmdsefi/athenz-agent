@@ -19,9 +19,9 @@ package monitor
 
 import (
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/cache"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/cache"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/config"
 	"time"
 )
 

@@ -15,7 +15,7 @@
 package log
 
 import (
-	"gitlab.com/trialblaze/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common"
 )
 
 const (

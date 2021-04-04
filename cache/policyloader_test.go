@@ -17,10 +17,10 @@ package cache
 
 import (
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
-	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/token"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/token"
 	"io/ioutil"
 	"reflect"
 	"testing"

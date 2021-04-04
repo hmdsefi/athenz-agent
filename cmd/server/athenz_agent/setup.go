@@ -12,11 +12,11 @@
  *
  */
 
-package zpe
+package athenz_agent
 
 import (
 	"github.com/urfave/cli"
-	"gitlab.com/trialblaze/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/config"
 )
 
 var (

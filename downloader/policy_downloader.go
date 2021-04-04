@@ -17,8 +17,8 @@ package downloader
 
 import (
 	"github.com/yahoo/athenz/utils/zpe-updater"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
 	)
 
 var (

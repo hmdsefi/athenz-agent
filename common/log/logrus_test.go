@@ -17,7 +17,7 @@ package log
 
 import (
 	"github.com/stretchr/testify/assert"
-	"gitlab.com/trialblaze/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common"
 	"os"
 	"strings"
 	"testing"

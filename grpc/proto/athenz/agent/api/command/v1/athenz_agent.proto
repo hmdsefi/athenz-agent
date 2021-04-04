@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package athenz.agent.api.command.v1;
+
+option go_package = "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/command/v1;v1";
+
+import "proto/athenz/agent/api/message/v1/athenz_agent.proto";
+
+service AthenzAgent {
+    rpc CheckAccessWithToken(athenz.agent.api.message.v1.AccessCheckRequest) returns (athenz.agent.api.message.v1.AccessCheckResponse);
+    rpc GetServiceToken(athenz.agent.api.message.v1.ServiceTokenRequest) returns (athenz.agent.api.message.v1.ServiceTokenResponse);
+}

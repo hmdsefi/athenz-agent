@@ -12,17 +12,17 @@
  *
  */
 
-package zpe
+package athenz_agent
 
 import (
 	"context"
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/auth"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
-	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/grpc/server"
-	"gitlab.com/trialblaze/athenz-agent/monitor"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/grpc/api"
+	"github.com/hamed-yousefi/athenz-agent/grpc/server"
+	"github.com/hamed-yousefi/athenz-agent/monitor"
 	"sync"
 )
 
@@ -63,7 +63,7 @@ func run() {
 	// create context with its cancellation method
 	ctx, cancel := context.WithCancel(ctx)
 
-	permissionService := &auth.PermissionService{}
+	permissionService := &api.PermissionService{}
 
 	// start policy downloader
 	go monitor.StartDownloader(downloaderChan)

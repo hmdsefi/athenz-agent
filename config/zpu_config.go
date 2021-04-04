@@ -17,7 +17,7 @@ package config
 
 import (
 	"github.com/yahoo/athenz/utils/zpe-updater"
-	"gitlab.com/trialblaze/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common"
 )
 
 const (

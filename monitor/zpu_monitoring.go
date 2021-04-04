@@ -17,8 +17,8 @@ package monitor
 
 import (
 	"fmt"
-	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/downloader"
+	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/downloader"
 	"time"
 )
 

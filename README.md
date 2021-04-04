@@ -1,13 +1,9 @@
 # Athenz Sidecar Agent
-This project contains athenz ZPE and ZPU utilities in Go language. ZPU will download the domains policy files and store 
-them into the filesystem. In other side, ZPE will use that policy files and it will cache them into memory to use them as
+`athenz-agent` contains athenz ZPE and ZPU utilities in Go language. ZPU will download the domains' policy files and store 
+them into the filesystem. In other side, ZPE will use that policy files, and it will cache them into memory to use them as
 fast as possible.
 
-## How to install
-1. Using Makefile
-1. Manual
-
-### Using Makefile
+### How to install
 For using Makefile you must edit this file and change some of variables as you want. 
 * Set `BUILDPATH` to any directory that you want build this project into: 
 ``` 
@@ -31,15 +27,6 @@ ATHENZCONF=/home/athenz/athenz-zms-1.8.10/bin/linux
 ```bash
 cd $(BUILDPATH) && ./athenz-agent
 ```
-### Manual
-1. Use ```go mod tidy ``` to get project dependencies
-1. Use ```go build cmd/tools/athenz-agent.go``` to build project and generate the executable file.
-1. Move generated executable file to your build path. Do not use project root directory as build path.
-1. Copy `agent.json` file to the build bath next to the generated executable file.
-1. Create `config` folder in build path next to the generated executable file.
-1. Copy `zpe.conf` and `zpu.conf` from resource folder in project root directory to the created config folder in your build path.
-1. Use `athenz-conf` utility to generate `athenz-conf`: ```./athenz-conf -o <build-path>/config/athenz.conf -z <zms-url>```
-1. Run sidecar by ```./athenz-agent``` command
 
 ## Configuration
 There are three different config file in this project:

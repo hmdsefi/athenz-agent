@@ -1,6 +1,6 @@
 # project information
 PROJECTNAME=$(shell basename "$(PWD)")
-GOPKGNAME = gitlab.com/trialblaze/athenz-agent
+GOPKGNAME = github.com/hamed-yousefi/athenz-agent
 PKG_DATE=$(shell date '+%Y-%m-%dT%H:%M:%S')
 SRC=cmd/tools/athenz-agent.go
 GOBASE=$(PWD)

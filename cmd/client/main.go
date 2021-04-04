@@ -15,14 +15,14 @@
 package main
 
 import (
-	"gitlab.com/trialblaze/athenz-agent/cmd/client/zpe"
+	agent "github.com/hamed-yousefi/athenz-agent/cmd/client/athenz_agent"
 	"log"
 	"os"
 )
 
 // main entry point for the athenz-agent client
 func main() {
-	app := zpe.BuildCLI()
+	app := agent.BuildCLI()
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

@@ -15,9 +15,9 @@ package token
 import (
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/common/log"
-	"gitlab.com/trialblaze/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/config"
 	"io/ioutil"
 	"strconv"
 	"strings"

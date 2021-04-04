@@ -17,7 +17,7 @@ package log
 import (
 	rotateLogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
-	"gitlab.com/trialblaze/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common"
 	"io"
 	"os"
 	"sync"

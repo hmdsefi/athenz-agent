@@ -20,18 +20,18 @@
  *
  */
 
-package auth
+package api
 
 import (
 	"crypto/tls"
+	"github.com/hamed-yousefi/athenz-agent/.gen/proto/api/message/v1"
+	"github.com/hamed-yousefi/athenz-agent/cache"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/matcher"
+	"github.com/hamed-yousefi/athenz-agent/token"
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	"gitlab.com/trialblaze/athenz-agent/cache"
-	"gitlab.com/trialblaze/athenz-agent/common"
-	"gitlab.com/trialblaze/athenz-agent/config"
-	"gitlab.com/trialblaze/athenz-agent/matcher"
-	"gitlab.com/trialblaze/athenz-agent/token"
-	"gitlab.com/trialblaze/grpc-go/pkg/api/common/message/v1"
 	"golang.org/x/net/context"
 	"io/ioutil"
 	"net/http"
@@ -263,7 +263,7 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 		status = DenyDomainEmpty
 	}
 
-	return &v1.AccessCheckResponse{AccessCheckStatus: status}, nil
+	return &v1.AccessCheckResponse{AccessCheckStatus: v1.AccessStatus(status)}, nil
 }
 
 func actionByRole(action, resource string, roles []string,
