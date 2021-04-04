@@ -13,4 +13,3 @@ services:
       - ./build/config:/app/config
     ports:
       - "9091:9091"
-#    command: ['agent', 'start']
