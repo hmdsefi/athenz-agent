@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package athenz.agent.api.message.v1;
+
+option go_package = "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/message/v1;v1";
+
+enum AccessStatus {
+    ALLOW = 0;
+    DENY = 1;
+    DENY_ROLE_TOKEN_EXPIRED = 2;
+    DENY_ROLE_TOKEN_INVALID = 3;
+    DENY_INVALID_PARAMETERS = 4;
+    DENY_DOMAIN_MISMATCH = 5;
+    DENY_DOMAIN_NOT_FOUND = 6;
+    DENY_NO_MATCH = 7;
+    DENY_DOMAIN_EMPTY = 8;
+    DENY_DOMAIN_EXPIRED = 9;
+}
+
+message AccessCheckRequest {
+    string token = 1;
+    string access = 2;
+    string resource = 3;
+}
+
+message AccessCheckResponse {
+    AccessStatus access_check_status = 1;
+}
+
+message ServiceTokenRequest {
+
+}
+
+message ServiceTokenResponse {
+    string token = 1;
+}

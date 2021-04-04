@@ -1,0 +1,16 @@
+[server]
+name= "sidecar-agent"
+port= "9091"
+
+[config]
+"zpe_config_file" = "testdata/zpe.conf"
+"zpu_config_file" = "testdata/zpu.conf"
+"athenz_config_file" = "testdata/athenz.conf"
+
+[log]
+path = "logs"
+level = "debug"
+max_age = "720h"
+max_size = "20MB"
+filename_pattern = ".%Y-%m-%dT%H:%M"
+rotation_time = "24h"

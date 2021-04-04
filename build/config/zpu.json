@@ -1,0 +1,14 @@
+{
+  "domains": "mydm",
+  "user": "root",
+  "policyDir": "var/policy",
+  "metricsDir": "var/metric",
+  "logMaxsize": 100,
+  "logMaxage": 28,
+  "logMaxbackups": 7,
+  "logCompress": true,
+  "privateKeyFile": "",
+  "certFile": "",
+  "caCertFile": "",
+  "proxy": false
+}
