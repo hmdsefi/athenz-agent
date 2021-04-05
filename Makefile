@@ -32,7 +32,8 @@ test: sync
 
 codecov: sync
 	$(info __________________running tests coverage___________________)
-	 sh build/script/coverage.sh
+	sh build/script/coverage.sh
+	bash <(curl -s https://codecov.io/bash)
 
 build: sync
 	$(info ________________________building app_______________________)
