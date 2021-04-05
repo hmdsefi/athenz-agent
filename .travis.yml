@@ -20,8 +20,8 @@ matrix:
       go: 1.15.x
       script: make test
     - stage: codecov
-        go: 1.15.x
-        script: make codecov
+      go: 1.15.x
+      script: make codecov
     - stage: build
       go: 1.15.x
       script: make build
