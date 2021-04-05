@@ -2,36 +2,11 @@ SRC=$(shell find . -name "*.go")
 
 # project information
 PROJECTNAME=$(shell basename "$(PWD)")
-GOPKGNAME = github.com/hamed-yousefi/athenz-agent
 PKG_DATE=$(shell date '+%Y-%m-%dT%H:%M:%S')
 SRC=cmd/tools/athenz-agent.go
 GOBASE=$(PWD)
 GOBIN=$(GOBASE)/bin
-GOPATH=$(GOBASE)/vendor
 
-# build information
-BUILDPATH=/home/athenz/sidecar
-
-# athenz information
-URL=https://localhost:4443/
-ATHENZCONF=/home/athenz/bin/linux
-
-# Go related commands
-#GOCMD=go
-#GOBUILD=$(GOCMD) build
-#GOCLEAN=$(GOCMD) clean
-#GOTEST=$(GOCMD) test ./...
-#GOSYNC=$(GOCMD)  mod tidy
-
-
-# Redirect error output to a file, so we can show it in development mode.
-STDERR=/tmp/.$(PROJECTNAME)-stderr.txt
-
-# PID file will store the server process id when it's running on development mode
-PID=/tmp/.$(PROJECTNAME)-api-server.pid
-
-# Make is verbose in Linux. Make it silent.
-MAKEFLAGS += --silent
 
 # we need to make sure we have go 1.11+
 # the output for the go version command is:
