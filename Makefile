@@ -32,7 +32,7 @@ test: sync
 
 codecov: sync
 	$(info __________________running tests coverage___________________)
-	 go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
+	 sh build/script/coverage.sh
 
 build: sync
 	$(info ________________________building app_______________________)

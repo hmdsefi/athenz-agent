@@ -2,7 +2,6 @@ language: go
 
 stages:
   - test
-  - codecov
   - build
 
 go:
@@ -19,9 +18,12 @@ matrix:
     - stage: test
       go: 1.15.x
       script: make test
-    - stage: codecov
-      go: 1.15.x
-      script: make codecov
     - stage: build
       go: 1.15.x
       script: make build
+
+script:
+  - make codecov
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
