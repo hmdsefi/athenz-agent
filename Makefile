@@ -30,7 +30,11 @@ test: sync
 	$(info _______________________running tests_______________________)
 	 richgo test -v ./...
 
-build:
+codecov: sync
+	$(info __________________running tests coverage___________________)
+	 go test -v  -coverprofile=coverage.txt -covermode=atomic ./...
+
+build: sync
 	$(info ________________________building app_______________________)
 	GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o agent cmd/server/main.go
 
