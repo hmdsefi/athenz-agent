@@ -30,7 +30,7 @@ test: sync
 	$(info _______________________running tests_______________________)
 	 richgo test -v ./...
 
-build: sync
+build:
 	$(info ________________________building app_______________________)
 	GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o agent cmd/server/main.go
 
