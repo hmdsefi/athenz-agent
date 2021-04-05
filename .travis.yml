@@ -20,4 +20,4 @@ matrix:
       script: make test
     - stage: build
       go: 1.12.x
-      script: make cobra_generator
+      script: make build
