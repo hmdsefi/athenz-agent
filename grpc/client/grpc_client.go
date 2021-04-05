@@ -18,7 +18,6 @@
 package client
 
 import (
-	"errors"
 	"fmt"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
@@ -43,7 +42,7 @@ func CheckAccessWithClient(token, access, resource, host, serverPort string) (in
 
 	conn, err := grpc.Dial(host+serverPort, grpc.WithInsecure())
 	if err != nil {
-		logger.Fatalf("CheckAccessWithClient: unable to connect, error: %s", err.Error())
+		logger.Fatalf("unable to connect, error: %s", err.Error())
 	}
 	defer func() {
 		_ = conn.Close()
@@ -54,8 +53,7 @@ func CheckAccessWithClient(token, access, resource, host, serverPort string) (in
 	response, err := client.CheckAccessWithToken(context.Background(),
 		&msg.AccessCheckRequest{Token: token, Access: access, Resource: resource})
 	if err != nil {
-		return -1, errors.New(fmt.Sprintf("%s> error when calling `CheckAccessWithToken`, error: %s",
-			common.FuncName(), err.Error()))
+		return -1, common.Errorf(fmt.Sprintf("error when calling `CheckAccessWithToken`, error: %s", err.Error()))
 	}
 
 	return int32(response.AccessCheckStatus.Enum().Number()), err

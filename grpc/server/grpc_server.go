@@ -21,9 +21,14 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
+	"github.com/hamed-yousefi/athenz-agent/config"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/signal"
@@ -42,8 +47,14 @@ func RunServer(ctx context.Context, ps ac.AthenzAgentServer, port string, waitGr
 		return err
 	}
 
+	credential, err := mTLSCredential(config.AgentConfig.Properties.Server.MtlsProperties)
+	if err != nil {
+		logger.Error(err.Error())
+		return err
+	}
+
 	// register service
-	server := grpc.NewServer()
+	server := grpc.NewServer(grpc.Creds(credential))
 	ac.RegisterAthenzAgentServer(server, ps)
 
 	// graceful shutdown
@@ -67,4 +78,36 @@ func RunServer(ctx context.Context, ps ac.AthenzAgentServer, port string, waitGr
 	// start gRPC server
 	logger.Info("'athenz-agent' gRPC server listening on port: "+ port)
 	return server.Serve(listen)
+}
+
+func mTLSCredential(properties config.MtlsProperties) (credentials.TransportCredentials,error){
+
+	if properties.IsEmpty() {
+		return nil, nil
+	}
+	certificate, err := tls.LoadX509KeyPair(properties.CrtPath, properties.PrivateKeyPath)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
+
+	data, err := ioutil.ReadFile(properties.CaPath)
+	if err != nil {
+		logger.Error(err.Error())
+		return nil, err
+	}
+	
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(data) {
+		logger.Error("append ca cert failed!")
+		return nil, err
+	}
+
+	tlsConfig := &tls.Config{
+		ClientAuth: tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{certificate},
+		ClientCAs: certPool,
+	}
+
+	return credentials.NewTLS(tlsConfig), err
 }

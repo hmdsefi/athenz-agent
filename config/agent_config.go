@@ -18,9 +18,10 @@ package config
 
 import (
 	"github.com/alecthomas/units"
-	convertor "github.com/xhit/go-str2duration/v2"
 	"github.com/hamed-yousefi/athenz-agent/common"
+	convertor "github.com/xhit/go-str2duration/v2"
 	"math/rand"
+	"strconv"
 	"time"
 )
 
@@ -47,8 +48,15 @@ type (
 	}
 
 	ServerProperties struct {
-		Name string
-		Port string
+		Name           string
+		Port           string
+		MtlsProperties
+	}
+
+	MtlsProperties struct {
+		CaPath         string `mapstructure:"ca_path"`
+		CrtPath        string `mapstructure:"crt_path"`
+		PrivateKeyPath string `mapstructure:"key_path"`
 	}
 
 	// logProperties represents log config
@@ -87,7 +95,7 @@ func LoadAgentConfig(agentConfig *AgentConfiguration, filePath string) error {
 
 	if agentConfig.Properties.Server.Port == "" {
 		rand.Seed(time.Now().UnixNano())
-		agentConfig.Properties.Server.Port = string(rune(rand.Intn(55000) + 10000))
+		agentConfig.Properties.Server.Port = strconv.Itoa(rand.Intn(55000) + 10000)
 	}
 
 	// use default configuration for config loader
@@ -133,4 +141,13 @@ func (p logProperties) GetMaxSize() int64 {
 
 func (p logProperties) GetFilenamePattern() string {
 	return p.FilenamePattern
+}
+
+// IsEmpty checks if MtlsProperties has value or not. If not returns true else
+// returns false.
+func (p MtlsProperties) IsEmpty() bool {
+	if p.CaPath=="" && p.PrivateKeyPath=="" && p.CrtPath=="" {
+		return true
+	}
+	return false
 }
