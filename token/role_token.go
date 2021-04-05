@@ -138,7 +138,7 @@ func NewRoleToken(signedToken string) (*RoleToken, error) {
 	for _, part := range parts {
 		inner := strings.Split(part, "=")
 		if len(inner) != 2 {
-			return nil, common.Errorf("malformed token field %s",part)
+			return nil, common.Errorf("malformed token field %s", part)
 		}
 
 		switch inner[0] {

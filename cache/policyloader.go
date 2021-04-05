@@ -25,14 +25,14 @@ package cache
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/yahoo/athenz/clients/go/zts"
-	"github.com/yahoo/athenz/libs/go/zmssvctoken"
-	zpuUtil "github.com/yahoo/athenz/utils/zpe-updater/util"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
 	"github.com/hamed-yousefi/athenz-agent/matcher"
 	"github.com/hamed-yousefi/athenz-agent/token"
+	"github.com/yahoo/athenz/clients/go/zts"
+	"github.com/yahoo/athenz/libs/go/zmssvctoken"
+	zpuUtil "github.com/yahoo/athenz/utils/zpe-updater/util"
 
 	"os"
 	"reflect"

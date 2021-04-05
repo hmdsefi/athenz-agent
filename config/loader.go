@@ -89,7 +89,7 @@ func (c *viperLoader) LoadConfig(config interface{}, filePath string) error {
 //
 // WithDefaultConfig enables config file reload on new changes at runtime
 // and environment variable detection.
-func (c *viperLoader) WithDefaultConfig()  {
+func (c *viperLoader) WithDefaultConfig() {
 
 	// load new config changes at runtime and notifies it
 	c.v.WatchConfig()

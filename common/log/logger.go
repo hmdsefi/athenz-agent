@@ -22,13 +22,13 @@ const (
 	// Fatal level.  Logs and then calls `log.Exit(1)`.
 	Fatal Level = 1
 	// Error level. Used for errors that should definitely be noted.
-	Error Level= 2
+	Error Level = 2
 	// Info level. General operational entries about what's going on inside the application.
-	Info Level= 3
+	Info Level = 3
 	// Debug level. Usually only enabled when debugging. Very verbose logging.
-	Debug Level= 4
+	Debug Level = 4
 	// Trace level. Designates finer-grained informational events than the Debug.
-	Trace Level= 5
+	Trace Level = 5
 )
 
 var (
@@ -43,7 +43,7 @@ var (
 	level2String = map[Level]string{
 		Fatal: "fatal",
 		Error: "error",
-		Info: "info",
+		Info:  "info",
 		Debug: "debug",
 		Trace: "trace",
 	}
@@ -73,7 +73,6 @@ type (
 	Rotator interface {
 		SetupRotation(provider common.LogConfigProvider)
 	}
-
 )
 
 func (l Level) String() string {

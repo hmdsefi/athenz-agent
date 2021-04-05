@@ -13,11 +13,11 @@
 package token
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"io/ioutil"
 	"strconv"
 	"strings"

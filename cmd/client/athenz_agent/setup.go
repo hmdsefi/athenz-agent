@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	token            string
-	access           string
-	resource         string
-	host             string
-	port       string
+	token    string
+	access   string
+	resource string
+	host     string
+	port     string
 )
 
 // BuildCLI is the main entry point for the cadence server

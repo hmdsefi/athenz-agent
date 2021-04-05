@@ -21,12 +21,12 @@ import (
 )
 
 // Fatal wraps log.Fatal function to prevent importing golang log package.
-func Fatal(in string)  {
-	log.Fatalf("%s-> %s", CallerFuncName(),in)
+func Fatal(in string) {
+	log.Fatalf("%s-> %s", CallerFuncName(), in)
 }
 
 // Fatalf wraps log.Fatalf function to prevent importing golang log package.
-func Fatalf(format string, params ...interface{}){
+func Fatalf(format string, params ...interface{}) {
 	msg := fmt.Sprintf(format, params...)
 	log.Fatalf("%s-> %s", CallerFuncName(), msg)
 }

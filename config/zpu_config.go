@@ -16,8 +16,8 @@
 package config
 
 import (
-	"github.com/yahoo/athenz/utils/zpe-updater"
 	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/yahoo/athenz/utils/zpe-updater"
 )
 
 const (

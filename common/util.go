@@ -156,7 +156,7 @@ func getFuncName(skip int) string {
 		return unknown
 	}
 
-	caller := runtime.FuncForPC(pc[0]-1)
+	caller := runtime.FuncForPC(pc[0] - 1)
 	if caller == nil {
 		return unknown
 	}

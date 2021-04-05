@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	ca = "testdata/ca-crt.pem"
+	ca        = "testdata/ca-crt.pem"
 	serverCrt = "testdata/server-crt.pem"
 	serverKey = "testdata/server-key.pem"
 	clientCrt = "testdata/client-crt.pem"
@@ -45,7 +45,7 @@ var (
 )
 
 type (
-	mockAthenzAgentService struct {	}
+	mockAthenzAgentService struct{}
 )
 
 func (m mockAthenzAgentService) CheckAccessWithToken(ctx context.Context, request *v1.AccessCheckRequest) (*v1.AccessCheckResponse, error) {
@@ -63,14 +63,13 @@ func TestRunServer(t *testing.T) {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 
-	ctx:=context.Background()
+	ctx := context.Background()
 	go func() {
 		err := RunServer(ctx, new(mockAthenzAgentService), port, wg)
 		a.NoError(err)
 	}()
 
-
-	<-time.After(2*time.Second)
+	<-time.After(2 * time.Second)
 
 	response, err := checkAccessByClientInsecure()
 	a.NoError(err)
@@ -90,20 +89,19 @@ func TestRunServerWithTLS(t *testing.T) {
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 
-	ctx:=context.Background()
+	ctx := context.Background()
 	go func() {
 		err := RunServer(ctx, new(mockAthenzAgentService), randomPort(), wg)
 		a.NoError(err)
 	}()
 
-
-	<-time.After(2*time.Second)
+	<-time.After(2 * time.Second)
 
 	wg.Done()
 	ctx.Done()
 }
 
-func checkAccessByClientInsecure() (*v1.AccessCheckResponse,error) {
+func checkAccessByClientInsecure() (*v1.AccessCheckResponse, error) {
 	var conn *grpc.ClientConn
 
 	conn, err := grpc.Dial("127.0.0.1:"+port, grpc.WithInsecure())
@@ -124,9 +122,9 @@ func checkAccessByClientInsecure() (*v1.AccessCheckResponse,error) {
 func checkAccessByClientSecure() *v1.AccessCheckResponse {
 	var conn *grpc.ClientConn
 
-	credential,err := mTLSCredential(config.MtlsProperties{
-		CaPath: ca,
-		CrtPath: clientCrt,
+	credential, err := mTLSCredential(config.MtlsProperties{
+		CaPath:         ca,
+		CrtPath:        clientCrt,
 		PrivateKeyPath: clientKey,
 	})
 	if err != nil {
