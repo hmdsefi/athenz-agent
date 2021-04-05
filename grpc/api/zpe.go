@@ -33,6 +33,8 @@ import (
 	"github.com/yahoo/athenz/clients/go/zts"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io/ioutil"
 	"net/http"
 	"reflect"
@@ -82,7 +84,7 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 		// validation step
 		rToken, err := token.NewRoleToken(req.Token)
 		if err != nil {
-			return nil, common.Errorf("unable to create RoleToken, error: %s", err.Error())
+			return nil, status.Error(codes.InvalidArgument, "unable to create RoleToken, error: "+ err.Error())
 		}
 
 		// validate the rToken
@@ -90,7 +92,7 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 		ztsKey, err := new(zmssvctoken.YBase64).DecodeString(pubKey)
 		isValid, err := rToken.Validate(string(ztsKey), config.ZpeConfig.Properties.AllowedOffset, false)
 		if err != nil {
-			return nil, common.Errorf("validation failed, error: %s", err.Error())
+			return nil, status.Error(codes.InvalidArgument, "token validation failed, error: "+ err.Error())
 		}
 		roleToken = rToken
 
@@ -142,9 +144,10 @@ func (permService PermissionService) CheckAccessWithToken(ctx context.Context,
 func (permService PermissionService) GetServiceToken(ctx context.Context,
 	req *v1.ServiceTokenRequest) (*v1.ServiceTokenResponse, error) {
 
+	// load ZTS server TLS config
 	tlsConfig, err := getTLSConfigFromFiles(config.ZpeConfig.Properties.KeyFilePath, config.ZpeConfig.Properties.CertFilePath)
 	if err != nil {
-		return nil, common.Errorf("unable to load TLS Config, error: %s", err.Error())
+		return nil, status.Error(codes.Internal, "unable to load TLS Config, error: "+ err.Error())
 	}
 
 	minExpiryTime := config.ZpeConfig.Properties.TokenExpirationMin * 60
@@ -156,7 +159,7 @@ func (permService PermissionService) GetServiceToken(ctx context.Context,
 	roleToken, err := client.GetRoleToken(zts.DomainName(config.ZpeConfig.Properties.DomainName),
 		zts.EntityList(config.ZpeConfig.Properties.RoleNames), &minExpiryTime, &maxExpiryTime, "")
 	if err != nil {
-		return nil, common.Errorf("unable to get roleToken, error: %s", err.Error())
+		return nil, status.Error(codes.InvalidArgument, "unable to get roleToken, error: "+ err.Error())
 	}
 
 	return &v1.ServiceTokenResponse{Token: roleToken.Token}, nil
@@ -195,8 +198,8 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 
 	now := time.Now().UnixNano()
 
-	var status int32
-	status = DenyDomainNotFound
+	var accessStatus int32
+	accessStatus = DenyDomainNotFound
 
 	// first hunt by role for deny assertions since
 	// deny takes precedence over allow assertions
@@ -208,10 +211,10 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 		if actionByRole(action, resource, roles, roleMap.RoleDataMap) {
 			return &v1.AccessCheckResponse{AccessCheckStatus: Deny}, nil
 		} else {
-			status = DenyNoMatch
+			accessStatus = DenyNoMatch
 		}
 	} else if ok {
-		status = DenyDomainEmpty
+		accessStatus = DenyDomainEmpty
 	}
 
 	// if the check was not explicitly denied by a
@@ -225,10 +228,10 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 		if actionByWildCardRole(action, resource, roles, roleMap.RoleDataMap) {
 			return &v1.AccessCheckResponse{AccessCheckStatus: Deny}, nil
 		} else {
-			status = DenyNoMatch
+			accessStatus = DenyNoMatch
 		}
 	} else if ok {
-		status = DenyDomainEmpty
+		accessStatus = DenyDomainEmpty
 	}
 
 	// so far it did not match any deny assertions so now let's
@@ -241,10 +244,10 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 		if actionByRole(action, resource, roles, roleMap.RoleDataMap) {
 			return &v1.AccessCheckResponse{AccessCheckStatus: Allow}, nil
 		} else {
-			status = DenyNoMatch
+			accessStatus = DenyNoMatch
 		}
 	} else if ok {
-		status = DenyDomainEmpty
+		accessStatus = DenyDomainEmpty
 	}
 
 	// at this point we either got an allow or didn't match anything so we're
@@ -257,13 +260,13 @@ func allowAction(action, resource, domain string, roles []string) (*v1.AccessChe
 		if actionByWildCardRole(action, resource, roles, roleMap.RoleDataMap) {
 			return &v1.AccessCheckResponse{AccessCheckStatus: Allow}, nil
 		} else {
-			status = DenyNoMatch
+			accessStatus = DenyNoMatch
 		}
 	} else if ok {
-		status = DenyDomainEmpty
+		accessStatus = DenyDomainEmpty
 	}
 
-	return &v1.AccessCheckResponse{AccessCheckStatus: v1.AccessStatus(status)}, nil
+	return &v1.AccessCheckResponse{AccessCheckStatus: v1.AccessStatus(accessStatus)}, nil
 }
 
 func actionByRole(action, resource string, roles []string,

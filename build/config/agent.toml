@@ -1,6 +1,9 @@
 [server]
-name= "sidecar-agent"
-port= "9091"
+name = "sidecar-agent"
+port = "9091"
+ca_path = ""
+crt_path = ""
+key_path = ""
 
 [config]
 "zpe_config_file" = "testdata/zpe.conf"
