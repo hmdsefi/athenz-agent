@@ -1,3 +1,4 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/hamed-yousefi/athenz-agent)](https://goreportcard.com/report/github.com/hamed-yousefi/athenz-agent)
 ### Athenz Sidecar Agent
 You're a Yahoo Athenz fan, so this app is created for you. `athenz-agent` contains athenz ZPE and ZPU utilities in Go language.
 ZPU will download the domains' policy files and store

@@ -1,0 +1,23 @@
+language: go
+
+stages:
+  - test
+  - build
+
+go:
+  - 1.12.x
+
+env: GO111MODULE=on
+
+before_install:
+  - go get -u github.com/kyoh86/richgo
+  - go get -u github.com/mitchellh/gox
+
+matrix:
+  include:
+    - stage: test
+      go: 1.12.x
+      script: make test
+    - stage: build
+      go: 1.12.x
+      script: make cobra_generator

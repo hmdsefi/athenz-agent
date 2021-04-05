@@ -1,3 +1,5 @@
+SRC=$(shell find . -name "*.go")
+
 # project information
 PROJECTNAME=$(shell basename "$(PWD)")
 GOPKGNAME = github.com/hamed-yousefi/athenz-agent
@@ -15,11 +17,11 @@ URL=https://localhost:4443/
 ATHENZCONF=/home/athenz/bin/linux
 
 # Go related commands
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test ./...
-GOSYNC=$(GOCMD)  mod tidy
+#GOCMD=go
+#GOBUILD=$(GOCMD) build
+#GOCLEAN=$(GOCMD) clean
+#GOTEST=$(GOCMD) test ./...
+#GOSYNC=$(GOCMD)  mod tidy
 
 
 # Redirect error output to a file, so we can show it in development mode.
@@ -34,41 +36,30 @@ MAKEFLAGS += --silent
 # we need to make sure we have go 1.11+
 # the output for the go version command is:
 # go version go1.11.1 darwin/amd64
-GO_VER_GTEQ11 := $(shell expr `go version | cut -f 3 -d' ' | cut -f2 -d.` \>= 11)
+GO_VER_GTEQ11 := $(shell expr `go version | cut -f 3 -d' ' | cut -f2 -d.` \>= 12)
 ifneq "$(GO_VER_GTEQ11)" "1"
 all:
-	@echo "Please install 1.11.x or newer version of golang"
+	@echo "Please install 1.12.x or newer version of golang"
 endif
 
-start:
-	@echo "  >  $(PROJECTNAME) is available at $(ADDR)"
-	@-$(BUILDPATH)/$(PROJECTNAME) 2>&1 & echo $$! > $(PID)
-	@cat $(PID) | sed "/^/s/^/  \>  PID: /"
+# Check richgo does exist.
+ifeq (, $(shell which richgo))
+$(warning "could not find richgo in $(PATH), run: go get github.com/kyoh86/richgo")
+endif
 
-stop:
-	@-touch $(PID)
-	@-kill `cat $(PID)` 2> /dev/null || true
-	@-rm $(PID)
+fmt:
+	$(info ____________________checking formatting____________________)
+	@test -z $(shell gofmt -l $(SRC)) || (gofmt -d $(SRC); exit 1)
 
-restart: stop start
+test: sync
+	$(info _______________________running tests_______________________)
+	 richgo test -v ./...
 
-build:
-	@echo "start building $(PROJECTNAME) to $(BUILDPATH)..."
-	@echo "create build path..."
-	mkdir -p $(BUILDPATH)
-	@echo "build path created."
-	echo "$(GOBUILD) $(GOBASE)/$(SRC)"
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) $(GOBUILD) $(SRC)
-	mv $(PROJECTNAME) $(BUILDPATH)
-	mkdir $(BUILDPATH)/config
-	cp $(GOBASE)/resource/zpe.conf $(BUILDPATH)/config
-	cp $(GOBASE)/resource/zpu.conf $(BUILDPATH)/config
-	cp $(GOBASE)/agent.json $(BUILDPATH)
-	cd $(ATHENZCONF) && ./athenz-conf -o $(BUILDPATH)/config/athenz.conf -z $(URL)
-	@echo "build finished."
+build: sync
+	$(info ________________________building app_______________________)
+	GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o agent cmd/server/main.go
 
 sync: 
-	@echo "checking if there is any missing dependencies..."
-	@GOPATH=$(GOPATH) GOBIN=$(GOBIN) $(GOSYNC)
-	@echo "synced successfully."
+	$(info _________________downloading dependencies___________________)
+	go mod download
 	
