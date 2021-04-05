@@ -37,4 +37,3 @@ build: sync
 sync: 
 	$(info _________________downloading dependencies___________________)
 	go get -v ./...
-	

@@ -5,7 +5,7 @@ stages:
   - build
 
 go:
-  - 1.12.x
+  - 1.15.x
 
 env: GO111MODULE=on
 
@@ -16,8 +16,8 @@ before_install:
 matrix:
   include:
     - stage: test
-      go: 1.12.x
+      go: 1.15.x
       script: make test
     - stage: build
-      go: 1.12.x
+      go: 1.15.x
       script: make build
