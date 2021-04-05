@@ -28,7 +28,7 @@ const (
 func TestLoadAgentConfig(t *testing.T) {
 	a := assert.New(t)
 	config := new(AgentConfiguration)
-	err := LoadAgentConfig(config,filePath)
+	err := LoadAgentConfig(config, filePath)
 	a.NoError(err)
 
 	a.Equal("9091", config.Properties.Server.Port)
@@ -40,7 +40,7 @@ func TestLoadAgentConfig(t *testing.T) {
 func TestLogProperties_GetMaxAge(t *testing.T) {
 	a := assert.New(t)
 	config := new(AgentConfiguration)
-	err := LoadAgentConfig(config,filePath)
+	err := LoadAgentConfig(config, filePath)
 	a.NoError(err)
 
 	a.Equal(time.Duration(24)*time.Hour, config.Properties.Log.GetRotationTime())

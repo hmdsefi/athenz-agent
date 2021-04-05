@@ -15,8 +15,8 @@
 package athenz_agent
 
 import (
-	"github.com/urfave/cli"
 	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/urfave/cli"
 )
 
 var (
@@ -36,31 +36,31 @@ func BuildCLI() *cli.App {
 
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
-			Name:   "zpe-config, e",
-			Value: config.DefaultZpeConfigPath,
-			Usage:  "ZPE utility configuration path",
-			EnvVar: config.EnvKeyZpeConfigPath,
+			Name:        "zpe-config, e",
+			Value:       config.DefaultZpeConfigPath,
+			Usage:       "ZPE utility configuration path",
+			EnvVar:      config.EnvKeyZpeConfigPath,
 			Destination: &zpeConfigPath,
 		},
 		cli.StringFlag{
-			Name:   "athenz-config, a",
-			Value:  config.DefaultAthenzConfigPath,
-			Usage:  "Athenz configuration file path for ZMS/ZTS urls and public keys",
-			EnvVar: config.EnvKeyAthenzConfigPath,
+			Name:        "athenz-config, a",
+			Value:       config.DefaultAthenzConfigPath,
+			Usage:       "Athenz configuration file path for ZMS/ZTS urls and public keys",
+			EnvVar:      config.EnvKeyAthenzConfigPath,
 			Destination: &athenzConfigPath,
 		},
 		cli.StringFlag{
-			Name:   "zpu-config, u",
-			Value:  config.DefaultZpuConfigPath,
-			Usage:  "ZPU utility configuration path",
-			EnvVar: config.EnvKeyZpuConfigPath,
+			Name:        "zpu-config, u",
+			Value:       config.DefaultZpuConfigPath,
+			Usage:       "ZPU utility configuration path",
+			EnvVar:      config.EnvKeyZpuConfigPath,
 			Destination: &zpuConfigPath,
 		},
 		cli.StringFlag{
-			Name:   "agent-config, c",
-			Value: config.DefaultAgentConfigPath,
-			Usage:  "Agent configuration file path",
-			EnvVar: config.EnvKeyAgentConfigPath,
+			Name:        "agent-config, c",
+			Value:       config.DefaultAgentConfigPath,
+			Usage:       "Agent configuration file path",
+			EnvVar:      config.EnvKeyAgentConfigPath,
 			Destination: &agentConfPath,
 		},
 	}

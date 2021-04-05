@@ -45,7 +45,7 @@ func run() {
 
 	// make new directory for policy files, if it doesn't exist
 	if err := common.CreateAllDirectories(config.ZpuConfig.Properties.PolicyFileDir); err != nil {
-		logger.Fatalf("cannot create policy directory, error: %s"+err.Error())
+		logger.Fatalf("cannot create policy directory, error: %s" + err.Error())
 	}
 
 	// ZPU channel, it's pipeline for sending error
@@ -73,9 +73,8 @@ func run() {
 	// start gRPC server in a goroutine
 	waitGrp.Add(1)
 	go func() {
-		if err := server.RunServer(ctx, permissionService, config.AgentConfig.Properties.Server.Port, &waitGrp);
-		err != nil {
-			serverStatusChan <- fmt.Sprintf("%s> gRPC server failed to start, error: %s", common.FuncName(),err.Error())
+		if err := server.RunServer(ctx, permissionService, config.AgentConfig.Properties.Server.Port, &waitGrp); err != nil {
+			serverStatusChan <- fmt.Sprintf("%s> gRPC server failed to start, error: %s", common.FuncName(), err.Error())
 		}
 	}()
 

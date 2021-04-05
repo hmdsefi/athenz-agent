@@ -43,35 +43,35 @@ type (
 	}
 
 	zpeProperties struct {
-		PolicyFilesDir       string `mapstructure:"policy_files_dir"`
+		PolicyFilesDir string `mapstructure:"policy_files_dir"`
 		// in seconds format
 		CleanupTokenInterval int64  `mapstructure:"cleanup_token_interval"`
 		AthenzConfigDir      string `mapstructure:"athenz_config_dir"`
 		AthenzTokenNoExpiry  bool   `mapstructure:"athenz_token_no_expiry"`
 		// in days format
-		AthenzTokenMaxExpiry int64  `mapstructure:"athenz_token_max_expiry"`
+		AthenzTokenMaxExpiry int64 `mapstructure:"athenz_token_max_expiry"`
 		// in seconds format
-		AllowedOffset        int64  `mapstructure:"allowed_offset"`
+		AllowedOffset int64 `mapstructure:"allowed_offset"`
 		// TLS cert, this will be used for communicating with ZTS server
-		CertFilePath         string `mapstructure:"cert_file_path"`
+		CertFilePath string `mapstructure:"cert_file_path"`
 		// Key for the TLS cert, this will be used for communicating with ZTS server
-		KeyFilePath          string `mapstructure:"key_file_path"`
+		KeyFilePath string `mapstructure:"key_file_path"`
 		// domain name that belong to the service that use this agent
-		DomainName           string `mapstructure:"domain_name"`
+		DomainName string `mapstructure:"domain_name"`
 		// the name that server register in athenz with
-		ServiceName          string `mapstructure:"service_name"`
+		ServiceName string `mapstructure:"service_name"`
 		// list of service comma separated role names
-		RoleNames            string `mapstructure:"role_names"`
+		RoleNames string `mapstructure:"role_names"`
 		// in minutes format, It will be used for getting roleToken from ZTS server
-		TokenExpirationMin   int32  `mapstructure:"token_expiration_min"`
+		TokenExpirationMin int32 `mapstructure:"token_expiration_min"`
 		// in minutes format, It will be used for getting roleToken from ZTS server
-		TokenExpirationMax   int32  `mapstructure:"token_expiration_max"`
+		TokenExpirationMax int32 `mapstructure:"token_expiration_max"`
 		// The key-version should be the same string that was used to register the key with Athenz
-		KeyVersion           string `mapstructure:"key_version"`
+		KeyVersion string `mapstructure:"key_version"`
 		// the duration for which the token is valid, in minutes format
-		NTokenExpiration     int64  `mapstructure:"ntoken_expiration"`
+		NTokenExpiration int64 `mapstructure:"ntoken_expiration"`
 		// in seconds format
-		ZpuDownloadInterval  int64 `mapstructure:"zpu_download_interval"`
+		ZpuDownloadInterval int64 `mapstructure:"zpu_download_interval"`
 	}
 
 	PublicKeys struct {
@@ -83,7 +83,7 @@ type (
 		ZtsUrl        string
 		ZmsUrl        string
 		ZtsPublicKeys []PublicKeys `mapstructure:"ztsPublicKeys"`
-		ZmsPublicKeys []PublicKeys`mapstructure:"zmsPublicKeys"`
+		ZmsPublicKeys []PublicKeys `mapstructure:"zmsPublicKeys"`
 	}
 )
 

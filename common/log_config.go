@@ -31,4 +31,3 @@ type (
 		GetFilenamePattern() string
 	}
 )
-

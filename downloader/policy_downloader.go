@@ -16,10 +16,10 @@
 package downloader
 
 import (
-	"github.com/yahoo/athenz/utils/zpe-updater"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
-	)
+	"github.com/yahoo/athenz/utils/zpe-updater"
+)
 
 var (
 	logger = log.GetLogger(common.GolangFileName())

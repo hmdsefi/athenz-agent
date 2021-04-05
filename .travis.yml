@@ -1,0 +1,28 @@
+language: go
+
+stages:
+  - test
+  - codecov
+  - build
+
+go:
+  - 1.15.x
+
+env: GO111MODULE=on
+
+before_install:
+  - go get -u github.com/kyoh86/richgo
+  - go get -u github.com/mitchellh/gox
+
+matrix:
+  include:
+    - stage: test
+      go: 1.15.x
+      script: make test
+    - stage: codecov
+      go: 1.15.x
+      script: make codecov
+      after_success: bash <(curl -s https://codecov.io/bash)
+    - stage: build
+      go: 1.15.x
+      script: make build

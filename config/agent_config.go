@@ -48,8 +48,8 @@ type (
 	}
 
 	ServerProperties struct {
-		Name           string
-		Port           string
+		Name string
+		Port string
 		MtlsProperties
 	}
 
@@ -146,7 +146,7 @@ func (p logProperties) GetFilenamePattern() string {
 // IsEmpty checks if MtlsProperties has value or not. If not returns true else
 // returns false.
 func (p MtlsProperties) IsEmpty() bool {
-	if p.CaPath=="" && p.PrivateKeyPath=="" && p.CrtPath=="" {
+	if p.CaPath == "" && p.PrivateKeyPath == "" && p.CrtPath == "" {
 		return true
 	}
 	return false

@@ -76,11 +76,11 @@ func RunServer(ctx context.Context, ps ac.AthenzAgentServer, port string, waitGr
 	}()
 
 	// start gRPC server
-	logger.Info("'athenz-agent' gRPC server listening on port: "+ port)
+	logger.Info("'athenz-agent' gRPC server listening on port: " + port)
 	return server.Serve(listen)
 }
 
-func mTLSCredential(properties config.MtlsProperties) (credentials.TransportCredentials,error){
+func mTLSCredential(properties config.MtlsProperties) (credentials.TransportCredentials, error) {
 
 	if properties.IsEmpty() {
 		return nil, nil
@@ -96,7 +96,7 @@ func mTLSCredential(properties config.MtlsProperties) (credentials.TransportCred
 		logger.Error(err.Error())
 		return nil, err
 	}
-	
+
 	certPool := x509.NewCertPool()
 	if !certPool.AppendCertsFromPEM(data) {
 		logger.Error("append ca cert failed!")
@@ -104,9 +104,9 @@ func mTLSCredential(properties config.MtlsProperties) (credentials.TransportCred
 	}
 
 	tlsConfig := &tls.Config{
-		ClientAuth: tls.RequireAndVerifyClientCert,
+		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
-		ClientCAs: certPool,
+		ClientCAs:    certPool,
 	}
 
 	return credentials.NewTLS(tlsConfig), err

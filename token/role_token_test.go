@@ -1,23 +1,29 @@
 /**
- * Copyright (c) 2019 TRIALBLAZE PTY. LTD. All rights reserved.
+ * Copyright © 2019 Hamed Yousefi <hdyousefi@gmail.com>.
+ *
+ * Use of this source code is governed by an MIT-style
+ * license that can be found in the LICENSE file.
  *
  * User: Hamed Yousefi
  * Email: hdyousefi@gmail.com
  * Date: 2/12/19
- * Time: 4:47 PM
+ * Time: 11:04 AM
  *
  * Description:
+ * In here we describe roleToken. Also you can create a
+ * role token by a signed token string. also you can validate
+ * roleToken.
  *
  */
 
 package token
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/stretchr/testify/assert"
+	"github.com/yahoo/athenz/libs/go/zmssvctoken"
 	"io/ioutil"
 	"strconv"
 	"strings"

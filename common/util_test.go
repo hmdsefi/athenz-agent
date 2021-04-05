@@ -103,7 +103,7 @@ func TestCreateAllDirectoriesExist(t *testing.T) {
 }
 
 func TestGetGolangFileName(t *testing.T) {
-	a:= assert.New(t)
+	a := assert.New(t)
 	filename := GolangFileName()
 	fmt.Println(filename)
 	a.Equal("util_test.go", filename)
@@ -116,14 +116,14 @@ func TestGetGolangFileNamePackageLevel(t *testing.T) {
 }
 
 func TestFuncName(t *testing.T) {
-	a:=assert.New(t)
+	a := assert.New(t)
 	funcName := FuncName()
 	fmt.Println(funcName)
 	a.Equal("common.TestFuncName", funcName)
 }
 
 func TestCallerFuncName(t *testing.T) {
-	a:=assert.New(t)
+	a := assert.New(t)
 	funcName := callerName()
 	fmt.Println(funcName)
 	a.Equal("common.TestCallerFuncName", funcName)

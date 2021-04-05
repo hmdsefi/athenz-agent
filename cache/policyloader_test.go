@@ -16,11 +16,11 @@
 package cache
 
 import (
-	"github.com/stretchr/testify/assert"
 	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
 	"github.com/hamed-yousefi/athenz-agent/token"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"reflect"
 	"testing"
@@ -28,9 +28,9 @@ import (
 )
 
 const (
-	configDirPrefix  = "config"
-	policyDirPrefix  = "policy"
-	polFile          = "test.pol"
+	configDirPrefix = "config"
+	policyDirPrefix = "policy"
+	polFile         = "test.pol"
 )
 
 func setup() {

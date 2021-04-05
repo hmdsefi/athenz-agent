@@ -15,9 +15,9 @@
 package log
 
 import (
+	"github.com/hamed-yousefi/athenz-agent/common"
 	rotateLogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
-	"github.com/hamed-yousefi/athenz-agent/common"
 	"io"
 	"os"
 	"sync"
@@ -52,7 +52,6 @@ type (
 	logrusLogRotator struct {
 		logrusInit *logrusInitializer
 	}
-
 )
 
 // GetLogger returns a Logger for a specific `.go` file.
@@ -114,7 +113,7 @@ func NewLogrusInitializer() Initializer {
 func (l *logrusInitializer) InitialLog(level Level) Rotator {
 	// initial logrus log just once in entire application lifecycle
 	singleton.Do(func() {
-		log.logger =logrus.New()
+		log.logger = logrus.New()
 		log.logger.SetFormatter(&logrus.JSONFormatter{})
 		lvl, err := logrus.ParseLevel(level.String())
 		if err != nil {

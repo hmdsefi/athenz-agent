@@ -16,8 +16,8 @@
 package log
 
 import (
-	"github.com/stretchr/testify/assert"
 	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
@@ -30,22 +30,22 @@ const (
 
 type (
 	logrusConfigProviderTest struct {
-		level string
-		path string
-		maxAge time.Duration
-		rotationTime time.Duration
-		maxSize int64
+		level           string
+		path            string
+		maxAge          time.Duration
+		rotationTime    time.Duration
+		maxSize         int64
 		filenamePattern string
 	}
 )
 
-func newLogConfigProviderTest(path string) common.LogConfigProvider{
+func newLogConfigProviderTest(path string) common.LogConfigProvider {
 	return logrusConfigProviderTest{
-		level: Info.String(),
-		path: path,
-		maxAge: time.Duration(600)*time.Second,
-		rotationTime: time.Duration(1)*time.Hour,
-		maxSize: 167772160,
+		level:           Info.String(),
+		path:            path,
+		maxAge:          time.Duration(600) * time.Second,
+		rotationTime:    time.Duration(1) * time.Hour,
+		maxSize:         167772160,
 		filenamePattern: ".%Y-%m-%dT%H:%M",
 	}
 }
@@ -74,13 +74,13 @@ func (l logrusConfigProviderTest) GetFilenamePattern() string {
 	return l.filenamePattern
 }
 
-func tearDown()  {
+func tearDown() {
 	path := strings.Split(logPath, string(os.PathSeparator))
 	common.RemoveAll(path[0])
 }
 
 func TestLogrusLogRotator_SetupRotation(t *testing.T) {
-	a:=assert.New(t)
+	a := assert.New(t)
 	logInit := NewLogrusInitializer()
 	rotator := logInit.InitialLog(Info)
 	rotator.SetupRotation(newLogConfigProviderTest(logPath))
