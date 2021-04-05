@@ -22,6 +22,7 @@ matrix:
     - stage: codecov
       go: 1.15.x
       script: make codecov
+      after_success: bash <(curl -s https://codecov.io/bash)
     - stage: build
       go: 1.15.x
       script: make build

@@ -30,7 +30,7 @@ test: sync
 	$(info _______________________running tests_______________________)
 	 richgo test -v ./...
 
-codecov: sync
+codecov:
 	$(info __________________running tests coverage___________________)
 	sh build/script/coverage.sh
 	bash <(curl -s https://codecov.io/bash)

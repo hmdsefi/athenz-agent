@@ -2,3 +2,4 @@ resource/policy*
 logs
 logs/*
 vendor
+coverage.txt
