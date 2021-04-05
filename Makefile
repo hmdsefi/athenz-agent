@@ -36,5 +36,5 @@ build: sync
 
 sync: 
 	$(info _________________downloading dependencies___________________)
-	go mod download
+	go get -v ./...
 	

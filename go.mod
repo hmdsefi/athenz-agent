@@ -1,6 +1,6 @@
 module github.com/hamed-yousefi/athenz-agent
 
-go 1.12
+go 1.15
 
 require (
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf
