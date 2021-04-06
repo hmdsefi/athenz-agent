@@ -1,6 +1,7 @@
 language: go
 
 stages:
+  - fmt
   - test
   - codecov
   - build
@@ -13,9 +14,13 @@ env: GO111MODULE=on
 before_install:
   - go get -u github.com/kyoh86/richgo
   - go get -u github.com/mitchellh/gox
+  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin latest
 
 matrix:
   include:
+    - stage: fmt
+      go: 1.15.x
+      script: make fmt
     - stage: test
       go: 1.15.x
       script: make test
