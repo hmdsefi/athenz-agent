@@ -29,7 +29,7 @@ import (
 var (
 	// KeyStore is a global variable of AthenzConfiguration type. It holds ZMS
 	// and ZTS public keys.
-	KeyStore  = newAthenzConfiguration()
+	KeyStore = newAthenzConfiguration()
 
 	// ZpeConfig is a global variable of ZpeConfiguration type. It holds ZPE
 	// configurations.

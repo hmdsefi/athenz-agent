@@ -50,52 +50,52 @@ var (
 // domain for a limited period of time.
 type RoleToken struct {
 	// the token version e.g. S1, U1.
-	Version               string
+	Version string
 
 	// domain for which token is valid.
-	Domain                string
+	Domain string
 
 	// list of comma separated roles.
-	RoleNames             []string
+	RoleNames []string
 
 	// the list of roles is complete in domain.
 	DomainCompleteRoleSet bool
 
 	// principal that got the token was generated.
-	Principal             string
+	Principal string
 
 	// time token was generated, nano second.
-	GenerationTime        int64
+	GenerationTime int64
 
 	// time token expires, nano second.
-	ExpiryTime            int64
+	ExpiryTime int64
 
 	// identifier - either version or zone name.
-	KeyId                 string
+	KeyId string
 
 	// a random 8 byte salt inner[1] hex encoded.
-	Salt                  string
+	Salt string
 
 	// host that issued this role token.
-	HostName              string
+	HostName string
 
 	// ip address that issued this role token.
-	IPAddress             string
+	IPAddress string
 
 	// signature generated over the roleToken string using Service's private Key and y64 encoded.
-	Signature             string
+	Signature string
 
 	// roleToken in string format.
-	SignedToken           string
+	SignedToken string
 
 	// roleToken with out signature to be validate.
-	UnsignedToken         string
+	UnsignedToken string
 
 	// roleToken can be expired for false or can live for ever for true.
-	AthenzTokenNoExpiry   bool
+	AthenzTokenNoExpiry bool
 
 	// maximum lifetime of the roleToken.
-	AthenzTokenMaxExpiry  int64
+	AthenzTokenMaxExpiry int64
 }
 
 // Validate validates roleToken by checking field like public key, signature and

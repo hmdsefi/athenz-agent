@@ -35,7 +35,7 @@ type (
 	// AgentConfiguration holds agent's properties. It uses a Loader to load
 	// configuration into Properties field.
 	AgentConfiguration struct {
-		loader     Loader
+		loader Loader
 		// Properties holds agent's properties
 		Properties *agentProperties
 	}

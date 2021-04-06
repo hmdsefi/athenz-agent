@@ -18,12 +18,24 @@
 package common
 
 const (
+	// ZpeFieldPolicyName represent name of policy.
 	ZpeFieldPolicyName = "polname"
+
+	// ZpeFieldAction represent name of action.
 	ZpeFieldAction     = "action"
+
+	// ZpeFieldResource represent name of resource.
 	ZpeFieldResource   = "resource"
+
+	// ZpeFieldRole represent name of role.
 	ZpeFieldRole       = "role"
 
+	// ZpeActionMatchStruct represent type name of actionMatchStruct.
 	ZpeActionMatchStruct   = "actionMatchStruct"
+
+	// ZpeResourceMatchStruct represent type name of resourceMatchStruct.
 	ZpeResourceMatchStruct = "resourceMatchStruct"
+
+	// ZpeRoleMatchStruct represent type name of roleMatchStruct.
 	ZpeRoleMatchStruct     = "roleMatchStruct"
 )
