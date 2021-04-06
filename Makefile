@@ -3,7 +3,7 @@ SRC=$(shell find . -name "*.go")
 # project information
 PROJECTNAME=$(shell basename "$(PWD)")
 PKG_DATE=$(shell date '+%Y-%m-%dT%H:%M:%S')
-SRC=cmd/tools/athenz-agent.go
+SRC=$(shell find . -name "*.go")
 GOBASE=$(PWD)
 GOBIN=$(GOBASE)/bin
 
