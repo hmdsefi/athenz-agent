@@ -18,7 +18,7 @@ before_install:
 
 matrix:
   include:
-    - stage: smt
+    - stage: fmt
       go: 1.15.x
       script: make fmt
     - stage: test
