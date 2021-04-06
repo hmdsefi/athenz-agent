@@ -12,7 +12,7 @@
  *
  */
 
-package athenz_agent
+package athenzagent
 
 import (
 	"github.com/hamed-yousefi/athenz-agent/config"

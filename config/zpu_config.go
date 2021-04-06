@@ -20,11 +20,6 @@ import (
 	"github.com/yahoo/athenz/utils/zpe-updater"
 )
 
-const (
-	LogFile = "agent.out"
-	LogDir  = "logs"
-)
-
 var (
 	ZpuConfig = new(ZpuConfiguration)
 )

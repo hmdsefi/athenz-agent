@@ -20,7 +20,7 @@
 package main
 
 import (
-	agent "github.com/hamed-yousefi/athenz-agent/cmd/server/athenz_agent"
+	agent "github.com/hamed-yousefi/athenz-agent/cmd/server/athenzagent"
 	"log"
 	"os"
 )

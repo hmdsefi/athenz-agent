@@ -15,7 +15,7 @@
 package main
 
 import (
-	agent "github.com/hamed-yousefi/athenz-agent/cmd/client/athenz_agent"
+	agent "github.com/hamed-yousefi/athenz-agent/cmd/client/athenzagent"
 	"log"
 	"os"
 )
