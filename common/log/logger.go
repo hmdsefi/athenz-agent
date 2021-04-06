@@ -75,6 +75,7 @@ type (
 	}
 )
 
+
 func (l Level) String() string {
 	str, ok := level2String[l]
 	if !ok {

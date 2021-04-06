@@ -26,12 +26,17 @@ import (
 )
 
 var (
+	// AgentConfig is a global variable of AgentConfiguration type. It holds agent's
+	// configuration in runtime.
 	AgentConfig = newAgentConfiguration()
 )
 
 type (
+	// AgentConfiguration holds agent's properties. It uses a Loader to load
+	// configuration into Properties field.
 	AgentConfiguration struct {
 		loader     Loader
+		// Properties holds agent's properties
 		Properties *agentProperties
 	}
 
@@ -41,18 +46,21 @@ type (
 		Log    logProperties
 	}
 
+	// Properties is a struct that stores configuration file's paths.
 	Properties struct {
 		ZpeConfigFile    string `mapstructure:"zpe_config_file"`
 		ZpuConfigFile    string `mapstructure:"zpu_config_file"`
 		AthenzConfigFile string `mapstructure:"athenz_config_file"`
 	}
 
+	// ServerProperties is a struct that represents grpc server information.
 	ServerProperties struct {
 		Name string
 		Port string
 		MtlsProperties
 	}
 
+	// MtlsProperties is a struct that stores mutual TLS configurations.
 	MtlsProperties struct {
 		CaPath         string `mapstructure:"ca_path"`
 		CrtPath        string `mapstructure:"crt_path"`
@@ -104,14 +112,17 @@ func LoadAgentConfig(agentConfig *AgentConfiguration, filePath string) error {
 	return nil
 }
 
+// GetLevel returns log level.
 func (p logProperties) GetLevel() string {
 	return p.Level
 }
 
+// GetPath returns the path that log files must be stored there.
 func (p logProperties) GetPath() string {
 	return p.Path
 }
 
+// GetMaxAge returns the max age of a log file before it gets purged from the file system.
 func (p logProperties) GetMaxAge() time.Duration {
 	maxAge, err := convertor.ParseDuration(p.MaxAge)
 	if err != nil {
@@ -121,6 +132,7 @@ func (p logProperties) GetMaxAge() time.Duration {
 	return maxAge
 }
 
+// GetRotationTime return the time between rotation.
 func (p logProperties) GetRotationTime() time.Duration {
 	rotationTime, err := convertor.ParseDuration(p.RotationTime)
 	if err != nil {
@@ -130,6 +142,7 @@ func (p logProperties) GetRotationTime() time.Duration {
 	return rotationTime
 }
 
+// GetMaxSize returns the log file size between rotation.
 func (p logProperties) GetMaxSize() int64 {
 	byteCount, err := units.ParseBase2Bytes(p.MaxSize)
 	if err != nil {
@@ -139,6 +152,7 @@ func (p logProperties) GetMaxSize() int64 {
 	return int64(byteCount)
 }
 
+// GetFilenamePattern returns filename pattern.
 func (p logProperties) GetFilenamePattern() string {
 	return p.FilenamePattern
 }

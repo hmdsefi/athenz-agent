@@ -21,10 +21,13 @@ import (
 )
 
 var (
+	// ZpuConfig is a global variable of ZpuConfiguration type. It holds ZPU configurations.
 	ZpuConfig = new(ZpuConfiguration)
 )
 
 type (
+	// ZpuConfiguration holds ZPU's properties. It uses a Loader to load
+	// configuration into Properties field.
 	ZpuConfiguration struct {
 		// Yahoo zpu configuration
 		Properties *zpu.ZpuConfiguration

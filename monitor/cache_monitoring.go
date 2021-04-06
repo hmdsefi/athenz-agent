@@ -35,6 +35,7 @@ type (
 	cacheMonitor struct{}
 )
 
+// NewCacheMonitor creates new instance of Monitor type from cacheMonitor.
 func NewCacheMonitor() Monitor {
 	return cacheMonitor{}
 }

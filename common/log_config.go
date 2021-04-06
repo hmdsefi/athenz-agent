@@ -23,11 +23,17 @@ type (
 	// package to prevent using log package objects and vice versa. This interface
 	// provides one directional dependency and OCP principle.
 	LogConfigProvider interface {
+		// GetLevel returns log level.
 		GetLevel() string
+		// GetPath returns the path that log files must be stored there.
 		GetPath() string
+		// GetMaxAge returns the max age of a log file before it gets purged from the file system.
 		GetMaxAge() time.Duration
+		// GetRotationTime return the time between rotation.
 		GetRotationTime() time.Duration
+		// GetMaxSize returns the log file size between rotation.
 		GetMaxSize() int64
+		// GetFilenamePattern returns filename pattern.
 		GetFilenamePattern() string
 	}
 )
