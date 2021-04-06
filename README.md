@@ -1,5 +1,4 @@
 [![Build Status](https://travis-ci.com/hamed-yousefi/athenz-agent.svg?branch=master)](https://travis-ci.com/hamed-yousefi/athenz-agent)
-[![Go Report Card](https://goreportcard.com/badge/github.com/hamed-yousefi/athenz-agent)](https://goreportcard.com/report/github.com/hamed-yousefi/athenz-agent)
 [![codecov](https://codecov.io/gh/hamed-yousefi/athenz-agent/branch/master/graph/badge.svg?token=WF7MZ3VFHG)](https://codecov.io/gh/hamed-yousefi/athenz-agent)
 ### Athenz Sidecar Agent
 You're a Yahoo Athenz fan, so this app is created for you. `athenz-agent` contains athenz ZPE and ZPU utilities in Go language.
