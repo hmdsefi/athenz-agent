@@ -32,7 +32,7 @@ var (
 
 type (
 	// cacheMonitor is an implementation of monitor for monitoring policy caching.
-	cacheMonitor struct {}
+	cacheMonitor struct{}
 )
 
 func NewCacheMonitor() Monitor {

@@ -31,7 +31,7 @@ var (
 type (
 	// zpuMonitor is an implementation of monitor. It monitors ZPU policy
 	// downloader.
-	zpuMonitor struct {}
+	zpuMonitor struct{}
 )
 
 func NewZpuMonitor() Monitor {
