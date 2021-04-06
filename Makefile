@@ -17,6 +17,11 @@ all:
 	@echo "Please install 1.12.x or newer version of golang"
 endif
 
+# Check golangci-lint does exist.
+ifeq (, $(shell which golangci-lint))
+$(warning "could not find golangci-lint in $(PATH), run: curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh")
+endif
+
 # Check richgo does exist.
 ifeq (, $(shell which richgo))
 $(warning "could not find richgo in $(PATH), run: go get github.com/kyoh86/richgo")
