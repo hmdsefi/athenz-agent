@@ -14,3 +14,12 @@
  */
 
 package config
+
+import (
+	"github.com/fsnotify/fsnotify"
+	"testing"
+)
+
+func TestNotify(t *testing.T) {
+	notify(fsnotify.Event{Name: "agent.conf"})
+}

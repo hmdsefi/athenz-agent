@@ -147,7 +147,7 @@ func TestAthenzConfiguration_GetZmsPublicKey(t *testing.T) {
 }
 
 func TestAthenzConfiguration_GetZmsPublicKeyWithValue(t *testing.T) {
-	a:= assert.New(t)
+	a := assert.New(t)
 
 	athenzConfig := new(AthenzConfiguration)
 
@@ -163,4 +163,28 @@ func TestAthenzConfiguration_GetZmsPublicKeyWithValue(t *testing.T) {
 	a.NoError(err)
 
 	a.Equal("zmsKey", athenzConfig.GetZmsPublicKey("0"))
+}
+
+func TestAthenzConfiguration_GetZtsPublicKey(t *testing.T) {
+	a := assert.New(t)
+	a.Equal("", KeyStore.GetZtsPublicKey("0"))
+}
+
+func TestAthenzConfiguration_GetZtsPublicKeyWithValue(t *testing.T) {
+	a := assert.New(t)
+
+	athenzConfig := new(AthenzConfiguration)
+
+	dir, err := ioutil.TempDir("./", testConfigDirPrefix)
+	a.NoError(err)
+	defer RemoveAll(dir)
+
+	configPath := dir + "/" + testAthenzConfigFile
+
+	err = CreateFile(configPath, `{"zmsUrl":"zms_url","ztsPublicKeys":[{"id":"0","key":"ztsKey"}]}`)
+	a.NoError(err)
+	err = LoadAthenzConfig(athenzConfig, configPath)
+	a.NoError(err)
+
+	a.Equal("ztsKey", athenzConfig.GetZtsPublicKey("0"))
 }

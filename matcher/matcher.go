@@ -31,10 +31,13 @@ import (
 	"strings"
 )
 
+// ZpeMatch is a mechanism to see if a string match with a pattern or not.
 type ZpeMatch interface {
+	// Match checks if the input string is a match with inner pattern or not.
 	Match(value string) bool
 }
 
+// ZpeMatchAll is an implementation of ZpeMatch. It matches with all input strings.
 type ZpeMatchAll struct {
 }
 
@@ -42,6 +45,8 @@ func (zma ZpeMatchAll) Match(value string) bool {
 	return true
 }
 
+// ZpeMatchEqual is an implementation of ZpeMatch. It returns true if input string
+// is equal to MatchValue.
 type ZpeMatchEqual struct {
 	MatchValue string
 }
@@ -50,6 +55,8 @@ func (zme ZpeMatchEqual) Match(value string) bool {
 	return zme.MatchValue == value
 }
 
+// ZpeMatchStartsWith is an implementation of ZpeMatch. It returns true if input string
+// starts with Prefix.
 type ZpeMatchStartsWith struct {
 	Prefix string
 }
@@ -58,6 +65,8 @@ func (zms ZpeMatchStartsWith) Match(value string) bool {
 	return strings.HasPrefix(value, zms.Prefix)
 }
 
+// ZpeMatchRegex is an implementation of ZpeMatch. It returns true if input string
+// matches with Pattern.
 type ZpeMatchRegex struct {
 	Pattern *regexp.Regexp
 }
@@ -66,6 +75,8 @@ func (zmr ZpeMatchRegex) Match(value string) bool {
 	return zmr.Pattern.MatchString(value)
 }
 
+// NewZpeMatchRegex returns new instance of ZpeMatch type. It would return an
+// error if the regex pattern were malformed.
 func NewZpeMatchRegex(in string) (ZpeMatch, error) {
 	patter, err := regexp.Compile(normalizePattern(in))
 	if err != nil {

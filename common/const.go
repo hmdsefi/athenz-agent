@@ -22,20 +22,20 @@ const (
 	ZpeFieldPolicyName = "polname"
 
 	// ZpeFieldAction represent name of action.
-	ZpeFieldAction     = "action"
+	ZpeFieldAction = "action"
 
 	// ZpeFieldResource represent name of resource.
-	ZpeFieldResource   = "resource"
+	ZpeFieldResource = "resource"
 
 	// ZpeFieldRole represent name of role.
-	ZpeFieldRole       = "role"
+	ZpeFieldRole = "role"
 
 	// ZpeActionMatchStruct represent type name of actionMatchStruct.
-	ZpeActionMatchStruct   = "actionMatchStruct"
+	ZpeActionMatchStruct = "actionMatchStruct"
 
 	// ZpeResourceMatchStruct represent type name of resourceMatchStruct.
 	ZpeResourceMatchStruct = "resourceMatchStruct"
 
 	// ZpeRoleMatchStruct represent type name of roleMatchStruct.
-	ZpeRoleMatchStruct     = "roleMatchStruct"
+	ZpeRoleMatchStruct = "roleMatchStruct"
 )
