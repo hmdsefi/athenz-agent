@@ -104,5 +104,5 @@ func (c *viperLoader) WithDefaultConfig() {
 // notify notifies the new event
 func notify(e fsnotify.Event) {
 	// TODO Use log.Info instead
-	fmt.Printf("Config file changed: %s\n", e.Name)
+	fmt.Println(fmt.Sprintf("Config file changed: %s", e.Name))
 }
