@@ -31,13 +31,17 @@ var (
 type (
 	// zpuMonitor is an implementation of monitor. It monitors ZPU policy
 	// downloader.
-	zpuMonitor struct {}
+	zpuMonitor struct{}
 )
 
+// NewZpuMonitor creates new instance Monitor type from zpuMonitor.
 func NewZpuMonitor() Monitor {
 	return zpuMonitor{}
 }
 
+// Start starts a process and monitor it. Most of the time this function
+// runs in a separate goroutine, because of that it accept a channel as
+// input argument.
 func (z zpuMonitor) Start(downloadChan chan<- string) {
 	for {
 		zpuLogger.Info("Start downloading policy files...")

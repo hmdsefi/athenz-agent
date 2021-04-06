@@ -32,9 +32,10 @@ var (
 
 type (
 	// cacheMonitor is an implementation of monitor for monitoring policy caching.
-	cacheMonitor struct {}
+	cacheMonitor struct{}
 )
 
+// NewCacheMonitor creates new instance of Monitor type from cacheMonitor.
 func NewCacheMonitor() Monitor {
 	return cacheMonitor{}
 }

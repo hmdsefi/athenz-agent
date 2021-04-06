@@ -46,28 +46,62 @@ var (
 	logger = log.GetLogger(common.GolangFileName())
 )
 
+// RoleToken authorize a given principal to assume some number of roles in a
+// domain for a limited period of time.
 type RoleToken struct {
-	Version               string   // the token version e.g. S1, U1
-	Domain                string   // domain for which token is valid
-	RoleNames             []string // list of comma separated roles
-	DomainCompleteRoleSet bool     // the list of roles is complete in domain
-	Principal             string   // principal that got the token was generated
-	GenerationTime        int64    // time token was generated, nano second
-	ExpiryTime            int64    // time token expires, nano second
-	KeyId                 string   // identifier - either version or zone name
-	Salt                  string   // a random 8 byte salt inner[1] hex encoded
-	HostName              string   // host that issued this role token
-	IPAddress             string   // ip address that issued this role token
-	Signature             string   // signature generated over the roleToken string using Service's private Key and y64 encoded
-	SignedToken           string   // roleToken in string format
-	UnsignedToken         string   // roleToken with out signature to be validate
-	AthenzTokenNoExpiry   bool     // roleToken can be expired for false or can live for ever for true
-	AthenzTokenMaxExpiry  int64    // maximum lifetime of the roleToken
+	// the token version e.g. S1, U1.
+	Version string
+
+	// domain for which token is valid.
+	Domain string
+
+	// list of comma separated roles.
+	RoleNames []string
+
+	// the list of roles is complete in domain.
+	DomainCompleteRoleSet bool
+
+	// principal that got the token was generated.
+	Principal string
+
+	// time token was generated, nano second.
+	GenerationTime int64
+
+	// time token expires, nano second.
+	ExpiryTime int64
+
+	// identifier - either version or zone name.
+	KeyId string
+
+	// a random 8 byte salt inner[1] hex encoded.
+	Salt string
+
+	// host that issued this role token.
+	HostName string
+
+	// ip address that issued this role token.
+	IPAddress string
+
+	// signature generated over the roleToken string using Service's private Key and y64 encoded.
+	Signature string
+
+	// roleToken in string format.
+	SignedToken string
+
+	// roleToken with out signature to be validate.
+	UnsignedToken string
+
+	// roleToken can be expired for false or can live for ever for true.
+	AthenzTokenNoExpiry bool
+
+	// maximum lifetime of the roleToken.
+	AthenzTokenMaxExpiry int64
 }
 
-// validate roleToken by checking field like public key, signature and unsignedToken
-// this fields must not be empty. checking generated time and expiry time and then
-// verify the roleToken by checking public key and hashing of data and signature.
+// Validate validates roleToken by checking field like public key, signature and
+// unsignedToken this fields must not be empty. checking generated time and expiry
+// time and then verify the roleToken by checking public key and hashing of data
+// and signature.
 func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allowNoExpiry bool) (bool, error) {
 
 	// check if data and signature exists
@@ -117,8 +151,7 @@ func (roleToken *RoleToken) Validate(publicKey string, allowedOffset int64, allo
 	return true, nil
 }
 
-// create new roleToken by a roleToken string that created
-// by zpe
+// NewRoleToken creates new roleToken by a roleToken string that created by zpe.
 func NewRoleToken(signedToken string) (*RoleToken, error) {
 	if signedToken == "" {
 		return nil, common.Error("input String signedToken must not be empty")

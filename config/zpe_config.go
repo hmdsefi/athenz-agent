@@ -27,16 +27,25 @@ import (
 )
 
 var (
-	KeyStore  = newAthenzConfiguration()
+	// KeyStore is a global variable of AthenzConfiguration type. It holds ZMS
+	// and ZTS public keys.
+	KeyStore = newAthenzConfiguration()
+
+	// ZpeConfig is a global variable of ZpeConfiguration type. It holds ZPE
+	// configurations.
 	ZpeConfig = newZpeConfiguration()
 )
 
 type (
+	// AthenzConfiguration holds ZMS and ZTS public keys. It uses a Loader to load
+	// configuration into Properties field.
 	AthenzConfiguration struct {
 		loader     Loader
 		Properties *athenzProperties
 	}
 
+	// ZpeConfiguration holds ZPE's properties. It uses a Loader to load
+	// configuration into Properties field.
 	ZpeConfiguration struct {
 		loader     Loader
 		Properties *zpeProperties
@@ -116,6 +125,7 @@ func LoadAthenzConfig(athenzConfig *AthenzConfiguration, filePath string) error 
 	return nil
 }
 
+// GetZtsPublicKey return ZTS public key for a specific input id.
 func (config AthenzConfiguration) GetZtsPublicKey(id string) string {
 	for _, ztsPublicKeys := range config.Properties.ZtsPublicKeys {
 		if ztsPublicKeys.Id == id {
@@ -125,6 +135,7 @@ func (config AthenzConfiguration) GetZtsPublicKey(id string) string {
 	return ""
 }
 
+// GetZmsPublicKey return ZMS public key for a specific input id.
 func (config AthenzConfiguration) GetZmsPublicKey(id string) string {
 	for _, zmsPublicKey := range config.Properties.ZmsPublicKeys {
 		if zmsPublicKey.Id == id {
