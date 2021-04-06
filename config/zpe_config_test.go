@@ -140,3 +140,27 @@ func TestReadZpeConfig(t *testing.T) {
 	a.Equal(int64(30), zpeConfig.Properties.AthenzTokenMaxExpiry)
 	a.Equal(int64(300), zpeConfig.Properties.AllowedOffset)
 }
+
+func TestAthenzConfiguration_GetZmsPublicKey(t *testing.T) {
+	a := assert.New(t)
+	a.Equal("", KeyStore.GetZmsPublicKey("0"))
+}
+
+func TestAthenzConfiguration_GetZmsPublicKeyWithValue(t *testing.T) {
+	a:= assert.New(t)
+
+	athenzConfig := new(AthenzConfiguration)
+
+	dir, err := ioutil.TempDir("./", testConfigDirPrefix)
+	a.NoError(err)
+	defer RemoveAll(dir)
+
+	configPath := dir + "/" + testAthenzConfigFile
+
+	err = CreateFile(configPath, `{"zmsUrl":"zms_url","zmsPublicKeys":[{"id":"0","key":"zmsKey"}]}`)
+	a.NoError(err)
+	err = LoadAthenzConfig(athenzConfig, configPath)
+	a.NoError(err)
+
+	a.Equal("zmsKey", athenzConfig.GetZmsPublicKey("0"))
+}

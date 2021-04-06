@@ -16,6 +16,7 @@ package log
 
 import (
 	"github.com/hamed-yousefi/athenz-agent/common"
+	"strings"
 )
 
 const (
@@ -84,8 +85,9 @@ func (l Level) String() string {
 	return str
 }
 
+// GetLevel convert a string to a log level. If log level wasn't valid calls log.Fatalf.
 func GetLevel(in string) Level {
-	level, ok := string2Level[in]
+	level, ok := string2Level[strings.ToLower(in)]
 	if !ok {
 		common.Fatalf("invalid input, level: %s", in)
 	}
