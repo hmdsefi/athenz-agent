@@ -17,15 +17,33 @@ package monitor
 
 import (
 	"fmt"
+	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
 	"github.com/hamed-yousefi/athenz-agent/downloader"
 	"time"
 )
 
-func StartDownloader(downloadChan chan<- string) {
+var (
+	zpuLogger = log.GetLogger(common.GolangFileName())
+)
+
+type (
+	// zpuMonitor is an implementation of monitor. It monitors ZPU policy
+	// downloader.
+	zpuMonitor struct {}
+)
+
+func NewZpuMonitor() Monitor {
+	return zpuMonitor{}
+}
+
+func (z zpuMonitor) Start(downloadChan chan<- string) {
 	for {
-		err := downloader.DownloadPolicies(config.ZpuConfig.Properties)
+		zpuLogger.Info("Start downloading policy files...")
+		err := downloader.NewPolicyDownloader(config.ZpuConfig.Properties).DownloadPolicies()
 		if err != nil {
+			zpuLogger.Error(err.Error())
 			downloadChan <- fmt.Sprintf("Policy updator failed, %s", err.Error())
 		}
 		<-time.After(time.Duration(config.ZpeConfig.Properties.ZpuDownloadInterval) * time.Second)

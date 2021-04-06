@@ -25,8 +25,27 @@ var (
 	logger = log.GetLogger(common.GolangFileName())
 )
 
-func DownloadPolicies(zpuConfig *zpu.ZpuConfiguration) error {
-	err := zpu.PolicyUpdater(zpuConfig)
+type (
+	// PolicyDownloader the interface that wraps ZPU policy downloader
+	PolicyDownloader interface {
+		// DownloadPolicies fetch policy files from ZMS
+		DownloadPolicies() error
+	}
+
+	zpuDownloader struct {
+		zpuConfig *zpu.ZpuConfiguration
+	}
+)
+
+// NewPolicyDownloader creates new instance of PolicyDownloader type
+func NewPolicyDownloader(zpuConfig *zpu.ZpuConfiguration) PolicyDownloader {
+	return zpuDownloader{
+		zpuConfig: zpuConfig,
+	}
+}
+
+func (d zpuDownloader) DownloadPolicies() error {
+	err := zpu.PolicyUpdater(d.zpuConfig)
 	if err != nil {
 		logger.Error(err.Error())
 		return common.Errorf("DownloadPolicies: policy updater failed, %s", err.Error())

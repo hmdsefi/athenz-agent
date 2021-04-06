@@ -12,7 +12,7 @@
  *
  */
 
-package athenz_agent
+package athenzagent
 
 import (
 	"context"
@@ -66,9 +66,9 @@ func run() {
 	permissionService := &api.PermissionService{}
 
 	// start policy downloader
-	go monitor.StartDownloader(downloaderChan)
+	go monitor.NewZpuMonitor().Start(downloaderChan)
 	// start caching policy files into memory
-	go monitor.StartCache(cacheChan)
+	go monitor.NewCacheMonitor().Start(cacheChan)
 
 	// start gRPC server in a goroutine
 	waitGrp.Add(1)

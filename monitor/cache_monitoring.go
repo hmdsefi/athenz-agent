@@ -21,17 +21,34 @@ import (
 	"fmt"
 	"github.com/hamed-yousefi/athenz-agent/cache"
 	"github.com/hamed-yousefi/athenz-agent/common"
+	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
 	"time"
 )
 
-func StartCache(cacheChan chan<- string) {
+var (
+	cacheLogger = log.GetLogger(common.GolangFileName())
+)
+
+type (
+	// cacheMonitor is an implementation of monitor for monitoring policy caching.
+	cacheMonitor struct {}
+)
+
+func NewCacheMonitor() Monitor {
+	return cacheMonitor{}
+}
+
+func (c cacheMonitor) Start(cacheChan chan<- string) {
 	for {
+		cacheLogger.Info("Cleanup role token cache...")
 		cache.CleanupRoleTokenCache()
 		files, err := common.LoadFileStatus(config.ZpeConfig.Properties.PolicyFilesDir)
 		if err != nil {
+			cacheLogger.Error(err.Error())
 			cacheChan <- fmt.Sprintf("unable to read policy directory, error: %s", err.Error())
 		}
+		cacheLogger.Info("Start caching policy files...")
 		cache.LoadDB(files)
 		<-time.After(time.Duration(config.ZpeConfig.Properties.CleanupTokenInterval) * time.Second)
 	}
