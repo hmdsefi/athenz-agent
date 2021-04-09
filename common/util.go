@@ -30,7 +30,7 @@ const (
 	unknown = "unknown"
 )
 
-// check if file path is exists or not
+// Exists checks if file path exists or not
 func Exists(name string) bool {
 	if _, err := os.Stat(name); os.IsNotExist(err) {
 		return false
@@ -38,10 +38,10 @@ func Exists(name string) bool {
 	return true
 }
 
-// return list of files from given directory
+// LoadFileStatus returns list of files from given directory
 func LoadFileStatus(dirName string) ([]os.FileInfo, error) {
-	if len(dirName) <= 0 || dirName == "" {
-
+	if len(dirName) == 0 || dirName == "" {
+		return nil, Error("invalid input: directory name is cannot be empty")
 	}
 
 	files, err := ioutil.ReadDir(dirName)
@@ -51,12 +51,12 @@ func LoadFileStatus(dirName string) ([]os.FileInfo, error) {
 	return files, nil
 }
 
-// this function return a timestamp by unix millisecond
+// CurrentTimeMillis returns a timestamp by unix millisecond.
 func CurrentTimeMillis() int64 {
 	return time.Now().UnixNano() / int64(time.Millisecond)
 }
 
-// Verify input json with zms or zts public keys
+// Verify input json with zms or zts public keys.
 func Verify(input, signature, publicKey string) error {
 	verifier, err := zmssvctoken.NewVerifier([]byte(publicKey))
 	if err != nil {
@@ -67,6 +67,7 @@ func Verify(input, signature, publicKey string) error {
 	return err
 }
 
+// StripDomainPrefix removes domain name from assertString.
 func StripDomainPrefix(assertString, domain, defaultValue string) string {
 	index := strings.Index(assertString, ":")
 	if index == -1 {
@@ -78,6 +79,7 @@ func StripDomainPrefix(assertString, domain, defaultValue string) string {
 	return assertString[index+1:]
 }
 
+// CreateFile creates new file and writes the input content in it.
 func CreateFile(fileName, content string) error {
 	if util.Exists(fileName) {
 		err := os.Remove(fileName)
@@ -94,6 +96,7 @@ func CreateFile(fileName, content string) error {
 	return nil
 }
 
+// RemoveAll removes the target path and all subdirectories.
 func RemoveAll(path string) error {
 	err := os.RemoveAll(path)
 	if err != nil {
@@ -102,7 +105,7 @@ func RemoveAll(path string) error {
 	return nil
 }
 
-// CreateMetricDirectory makes new directory for metric file, if it doesn't exist
+// CreateAllDirectories makes new directory for metric file, if it doesn't exist
 // CreateAllDirectories makes directory with all sub directories
 func CreateAllDirectories(path string) error {
 
@@ -147,7 +150,8 @@ func FuncName() string {
 	return getFuncName(3)
 }
 
-//
+// getFuncName returns the function name from caller stack. The input number
+// specifies the skip levels from top of the stack.
 func getFuncName(skip int) string {
 	pc := make([]uintptr, 1)
 
