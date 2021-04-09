@@ -22,6 +22,7 @@ import (
 	"github.com/hamed-yousefi/athenz-agent/token"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
@@ -89,6 +90,8 @@ func TestLoadDB(t *testing.T) {
 
 	policyPath := policyDir + "/" + polFile
 	err = common.CreateFile(policyPath, `{"signedPolicyData":{"expires":"2017-06-09T06:11:12.125Z","modified" : "2017-06-02T06:11:12.125Z","policyData":{"domain":"sys.auth","policies":[{"assertions":[{"action":"*","effect":"ALLOW","resource":"*","role":"sys.auth:role.admin"},{"action":"*","effect":"DENY","resource":"*","role":"sys.auth:role.non-admin"}],"name":"sys.auth:policy.admin"}]},"zmsKeyId":"0","zmsSignature":"Y2HuXmgL86PL1WnleGFHwPmNEqUdWgDxmmIsDnF5f5oqakacqTtwt9JNqDV9nuJ7LnKl3zsZoDQSAtcHMu4IGA--"},"signature":"XJnQ4t33D4yr7NtUjLaWhXULFr76z.z0p3QV4uCkA5KR9L4liVRmICYwVmnXxvHAlImKlKLv7sbIHNsjBfGfCw--","keyId": "0"}`)
+	a.NoError(err)
+	err = os.MkdirAll(policyDir+string(os.PathSeparator)+"test-dir", 0755)
 	a.NoError(err)
 
 	// check if zms and zts public keys not exist input must

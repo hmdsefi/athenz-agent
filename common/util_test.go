@@ -19,7 +19,10 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/athenz/libs/go/zmssvctoken"
+	"io/ioutil"
 	"os"
+	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -27,11 +30,68 @@ var (
 	testFilename = GolangFileName()
 )
 
+func TestExists(t *testing.T) {
+	a := assert.New(t)
+
+	_, file, _, ok := runtime.Caller(0)
+	a.True(ok)
+	a.True(Exists(file))
+
+	a.False(Exists("this/path/does/not/exists"))
+}
+
 func TestLoadFileStatusNull(t *testing.T) {
 
 	a := assert.New(t)
-	files, _ := LoadFileStatus("./somewhere")
+	files, err := LoadFileStatus("./somewhere")
+	a.Error(err)
 	a.Nil(files)
+}
+
+func TestLoadFileStatusEmptyPath(t *testing.T) {
+	a := assert.New(t)
+	files, err := LoadFileStatus("")
+	a.Error(err)
+	a.True(strings.HasSuffix(err.Error(), "invalid input: directory name is cannot be empty"))
+	a.Nil(files)
+}
+
+func TestLoadFileStatus(t *testing.T) {
+	a := assert.New(t)
+	// load current directory
+	files, err := LoadFileStatus(".")
+	a.NoError(err)
+	a.Equal(7, len(files))
+}
+
+func TestStripDomainPrefix(t *testing.T) {
+	a := assert.New(t)
+	// domain exists in assertString
+	a.Equal("books", StripDomainPrefix("domain:books", "domain", "some"))
+	// domain doesn't exist in assertString
+	a.Equal("books", StripDomainPrefix("books", "domain", "some"))
+	// domain doesn't exist in assertString
+	a.Equal("some", StripDomainPrefix("angler:books", "domain", "some"))
+}
+
+func TestCreateFile(t *testing.T) {
+	a := assert.New(t)
+
+	content := "You're a Yahoo Athenz fan, so this app is created for you. athenz-agent contains athenz ZPE and ZPU" +
+		" utilities in Go language. ZPU will download the domains' policy files and store them into the filesystem." +
+		" In other side, ZPE will use that policy files, and it will cache them into memory to use them as fast as possible."
+
+	tmpDir, err := ioutil.TempDir("./", "tmp")
+	a.NoError(err)
+	filename := "test-file.txt"
+	err = CreateFile(tmpDir+string(os.PathSeparator)+filename, content)
+	a.NoError(err)
+
+	err = CreateFile(tmpDir+string(os.PathSeparator)+filename, content)
+	a.NoError(err)
+
+	err = RemoveAll(tmpDir)
+	a.NoError(err)
 }
 
 func TestVerifierPositiveTest(t *testing.T) {

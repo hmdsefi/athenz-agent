@@ -105,6 +105,9 @@ func LoadDB(files []os.FileInfo) {
 		return
 	}
 	for _, policyFile := range files {
+		if policyFile.IsDir() {
+			continue
+		}
 		fileStatus := fileStatusMap[policyFile.Name()]
 		if fileStatus != nil {
 
