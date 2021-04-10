@@ -41,36 +41,38 @@ type ZpeMatch interface {
 type ZpeMatchAll struct {
 }
 
+// Match returns true for any input string
 func (zma ZpeMatchAll) Match(value string) bool {
 	return true
 }
 
-// ZpeMatchEqual is an implementation of ZpeMatch. It returns true if input string
-// is equal to MatchValue.
+// ZpeMatchEqual is an implementation of ZpeMatch.
 type ZpeMatchEqual struct {
 	MatchValue string
 }
 
+// Match returns true if input string is equal to MatchValue.
 func (zme ZpeMatchEqual) Match(value string) bool {
 	return zme.MatchValue == value
 }
 
-// ZpeMatchStartsWith is an implementation of ZpeMatch. It returns true if input string
-// starts with Prefix.
+// ZpeMatchStartsWith is an implementation of ZpeMatch for matching strings
+// with a specific prefix.
 type ZpeMatchStartsWith struct {
 	Prefix string
 }
 
+// Match returns true if input string starts with Prefix.
 func (zms ZpeMatchStartsWith) Match(value string) bool {
 	return strings.HasPrefix(value, zms.Prefix)
 }
 
-// ZpeMatchRegex is an implementation of ZpeMatch. It returns true if input string
-// matches with Pattern.
+// ZpeMatchRegex is an implementation of ZpeMatch for matching regex pattern.
 type ZpeMatchRegex struct {
 	Pattern *regexp.Regexp
 }
 
+// Match returns true if input string matches with Pattern.
 func (zmr ZpeMatchRegex) Match(value string) bool {
 	return zmr.Pattern.MatchString(value)
 }
