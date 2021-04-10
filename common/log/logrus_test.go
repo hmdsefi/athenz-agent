@@ -76,7 +76,10 @@ func (l logrusConfigProviderTest) GetFilenamePattern() string {
 
 func tearDown() {
 	path := strings.Split(logPath, string(os.PathSeparator))
-	common.RemoveAll(path[0])
+	err := common.RemoveAll(path[0])
+	if err != nil {
+		common.Fatal(err.Error())
+	}
 }
 
 func TestLogrusLogRotator_SetupRotation(t *testing.T) {
@@ -89,4 +92,14 @@ func TestLogrusLogRotator_SetupRotation(t *testing.T) {
 	logger := GetLogger(common.GolangFileName())
 	logger.Info("Hello World!")
 	tearDown()
+}
+
+func TestLevels(t *testing.T) {
+	logInit := NewLogrusInitializer()
+	logInit.InitialLog(Trace)
+	logger := GetLogger(common.GolangFileName())
+	logger.Info("test info")
+	logger.Error("test error")
+	logger.Debug("test debug")
+	logger.Trace("test trace")
 }

@@ -20,11 +20,12 @@ import (
 	"context"
 	ac "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/command/v1"
 	v1 "github.com/hamed-yousefi/athenz-agent/.gen/proto/api/message/v1"
-	"github.com/hamed-yousefi/athenz-agent/common"
 	"github.com/hamed-yousefi/athenz-agent/common/log"
 	"github.com/hamed-yousefi/athenz-agent/config"
+	"github.com/hamed-yousefi/athenz-agent/grpc/server/mock"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
+	"math"
 	"math/rand"
 	"strconv"
 	"sync"
@@ -44,28 +45,63 @@ var (
 	port = randomPort()
 )
 
-type (
-	mockAthenzAgentService struct{}
-)
-
-func (m mockAthenzAgentService) CheckAccessWithToken(ctx context.Context, request *v1.AccessCheckRequest) (*v1.AccessCheckResponse, error) {
-	return &v1.AccessCheckResponse{AccessCheckStatus: v1.AccessStatus_DENY_DOMAIN_EMPTY}, nil
-}
-
-func (m mockAthenzAgentService) GetServiceToken(ctx context.Context, request *v1.ServiceTokenRequest) (*v1.ServiceTokenResponse, error) {
-	panic("implement me")
-}
-
-func TestRunServer(t *testing.T) {
+func TestRunServerWrongPort(t *testing.T) {
 	log.NewLogrusInitializer().InitialLog(log.Info)
+	a := assert.New(t)
+	wg := new(sync.WaitGroup)
+	ctx := context.Background()
+	err := RunServer(ctx, new(mock.AthenzAgentService), strconv.Itoa(math.MaxInt32), wg)
+	a.Error(err)
+	a.Equal("listen tcp: address 2147483647: invalid port", err.Error())
+}
+
+func TestRunServerInvalidCredential(t *testing.T) {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+	config.AgentConfig.Properties.Server.CrtPath = "invalidPath"
+	config.AgentConfig.Properties.Server.PrivateKeyPath = "invalidPath"
+	config.AgentConfig.Properties.Server.CaPath = "invalidPath"
+
 	a := assert.New(t)
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
 
 	ctx := context.Background()
+	err := RunServer(ctx, new(mock.AthenzAgentService), randomPort(), wg)
+	a.Error(err)
+	a.Equal("open invalidPath: no such file or directory", err.Error())
+}
+
+func TestRunServerInvalidCa(t *testing.T) {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+	config.AgentConfig.Properties.Server.CrtPath = serverCrt
+	config.AgentConfig.Properties.Server.PrivateKeyPath = serverKey
+	config.AgentConfig.Properties.Server.CaPath = "invalidPath"
+
+	a := assert.New(t)
+
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+
+	ctx := context.Background()
+	err := RunServer(ctx, new(mock.AthenzAgentService), randomPort(), wg)
+	a.Error(err)
+	a.Equal("open invalidPath: no such file or directory", err.Error())
+}
+
+func TestRunServer(t *testing.T) {
+	log.NewLogrusInitializer().InitialLog(log.Info)
+	config.AgentConfig.Properties.Server.CrtPath = ""
+	config.AgentConfig.Properties.Server.PrivateKeyPath = ""
+	config.AgentConfig.Properties.Server.CaPath = ""
+	a := assert.New(t)
+
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+
+	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		err := RunServer(ctx, new(mockAthenzAgentService), port, wg)
+		err := RunServer(ctx, new(mock.AthenzAgentService), port, wg)
 		a.NoError(err)
 	}()
 
@@ -74,8 +110,9 @@ func TestRunServer(t *testing.T) {
 	response, err := checkAccessByClientInsecure()
 	a.NoError(err)
 	a.Equal(v1.AccessStatus_DENY_DOMAIN_EMPTY, response.AccessCheckStatus)
-	wg.Done()
-	ctx.Done()
+
+	// cancel the server to shut it down.
+	cancel()
 }
 
 func TestRunServerWithTLS(t *testing.T) {
@@ -91,7 +128,7 @@ func TestRunServerWithTLS(t *testing.T) {
 
 	ctx := context.Background()
 	go func() {
-		err := RunServer(ctx, new(mockAthenzAgentService), randomPort(), wg)
+		err := RunServer(ctx, new(mock.AthenzAgentService), randomPort(), wg)
 		a.NoError(err)
 	}()
 
@@ -117,37 +154,6 @@ func checkAccessByClientInsecure() (*v1.AccessCheckResponse, error) {
 	return client.CheckAccessWithToken(context.Background(),
 		&v1.AccessCheckRequest{Token: "token", Access: "access", Resource: "resource"})
 
-}
-
-func checkAccessByClientSecure() *v1.AccessCheckResponse {
-	var conn *grpc.ClientConn
-
-	credential, err := mTLSCredential(config.MtlsProperties{
-		CaPath:         ca,
-		CrtPath:        clientCrt,
-		PrivateKeyPath: clientKey,
-	})
-	if err != nil {
-		common.Fatal(err.Error())
-	}
-
-	conn, err = grpc.Dial("127.0.0.1:"+port, grpc.WithTransportCredentials(credential))
-	if err != nil {
-		logger.Fatalf("unable to connect, error: %s", err.Error())
-	}
-	defer func() {
-		_ = conn.Close()
-	}()
-
-	client := ac.NewAthenzAgentClient(conn)
-
-	response, err := client.CheckAccessWithToken(context.Background(),
-		&v1.AccessCheckRequest{Token: "token", Access: "access", Resource: "resource"})
-	if err != nil {
-		common.Fatal(err.Error())
-	}
-
-	return response
 }
 
 func randomPort() string {
