@@ -120,6 +120,17 @@ func TestLoadDB(t *testing.T) {
 	LoadDB(files)
 	a.True(fileStatusMap[polFile].isValidPolFile)
 
+	// load same policy file
+	files, _ = common.LoadFileStatus(policyDir)
+	LoadDB(files)
+
+	// remove policy file
+	if err = os.Remove(policyPath); err != nil {
+		common.Fatal(err.Error())
+	}
+	LoadDB(files)
+	_, ok := fileStatusMap[polFile]
+	a.False(ok)
 }
 
 func TestCleanupRoleTokenCache(t *testing.T) {
