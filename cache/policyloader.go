@@ -126,7 +126,7 @@ func LoadDB(files []os.FileInfo) {
 			}
 
 			// check if file was modified since last time it was loaded
-			if policyFile.ModTime().UnixNano() >= fileStatus.lastModifiedDate.UnixNano() {
+			if policyFile.ModTime().UnixNano() <= fileStatus.lastModifiedDate.UnixNano() {
 				// if valid and up to date return
 				// if not valid, may be due to timing issue for a new
 				// file not completely written - and file system timestamp
